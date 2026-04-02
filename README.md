@@ -28,6 +28,9 @@ npm start
 
 > **Note:** SCAN requires a Node.js server (Express) for the arXiv API, full-text parser, and Gemini integration. It cannot run as a static site on GitHub Pages alone. For hosting, use [Render](https://render.com), [Railway](https://railway.app), or [Vercel](https://vercel.com) (serverless).
 
+### 📖 Full Documentation
+See [`docs/00_Index.md`](docs/00_Index.md) for the complete documentation — architecture, design philosophy, AI integration, highlight system internals, bug chronicle, and configuration guide.
+
 ---
 
 ## What This Is
