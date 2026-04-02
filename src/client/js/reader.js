@@ -528,12 +528,32 @@ function renderRichContent(text) {
   let html = text;
 
   // Escape normal text but preserve our scan-* elements
-  // Split on scan-* tags, escape the text parts, rejoin
-  const parts = html.split(/(<scan-(?:math|figure|caption)[^>]*>[\s\S]*?<\/scan-(?:math|figure|caption)>|<scan-math[^>]*><\/scan-math>)/g);
-  html = parts.map(part => {
-    if (part.startsWith('<scan-')) return part; // Preserve our elements
-    return escapeHTML(part);
-  }).join('');
+  // First handle scan-figure (which contains nested scan-caption)
+  // Then handle scan-math (self-closing style)
+  const figPlaceholders = [];
+  html = html.replace(/<scan-figure\s+src="([^"]*)">([\s\S]*?)<\/scan-figure>/g, (match) => {
+    const idx = figPlaceholders.length;
+    figPlaceholders.push(match);
+    return `%%SCANFIG${idx}%%`;
+  });
+
+  const mathPlaceholders = [];
+  html = html.replace(/<scan-math[^>]*><\/scan-math>/g, (match) => {
+    const idx = mathPlaceholders.length;
+    mathPlaceholders.push(match);
+    return `%%SCANMATH${idx}%%`;
+  });
+
+  // Now escape everything (our placeholders are safe %% strings)
+  html = escapeHTML(html);
+
+  // Restore placeholders
+  figPlaceholders.forEach((fig, i) => {
+    html = html.replace(`%%SCANFIG${i}%%`, fig);
+  });
+  mathPlaceholders.forEach((math, i) => {
+    html = html.replace(`%%SCANMATH${i}%%`, math);
+  });
 
   // Convert <scan-math> to KaTeX-renderable spans
   // Display math
@@ -548,13 +568,23 @@ function renderRichContent(text) {
     return `<span class="scan-math scan-math--inline" data-latex="${latex}">${escapeHTML(decoded)}</span>`;
   });
 
-  // Convert <scan-figure> to img elements
-  html = html.replace(/<scan-figure src="([^"]*)">([\s\S]*?)<\/scan-figure>/g, (_, src, inner) => {
+  // Convert <scan-figure> to img elements (handle both self-contained and with caption)
+  html = html.replace(/<scan-figure\s+src="([^"]*)">([\s\S]*?)<\/scan-figure>/g, (_, src, inner) => {
     const captionMatch = inner.match(/<scan-caption>([\s\S]*?)<\/scan-caption>/);
     const caption = captionMatch ? captionMatch[1] : '';
     return `<figure class="scan-figure">
-      <img src="${src}" alt="${escapeHTML(caption)}" loading="lazy" />
-      ${caption ? `<figcaption class="scan-figure__caption">${escapeHTML(caption)}</figcaption>` : ''}
+      <img src="${src}" alt="${caption.slice(0, 100)}" loading="lazy" />
+      ${caption ? `<figcaption class="scan-figure__caption">${caption}</figcaption>` : ''}
+    </figure>`;
+  });
+
+  // Also handle any remaining raw <scan-figure> in the DOM (fallback)
+  html = html.replace(/&lt;scan-figure\s+src=&quot;([^&]*)&quot;&gt;([\s\S]*?)&lt;\/scan-figure&gt;/g, (_, src, inner) => {
+    const captionMatch = inner.match(/&lt;scan-caption&gt;([\s\S]*?)&lt;\/scan-caption&gt;/);
+    const caption = captionMatch ? captionMatch[1] : '';
+    return `<figure class="scan-figure">
+      <img src="${src}" alt="${caption.slice(0, 100)}" loading="lazy" />
+      ${caption ? `<figcaption class="scan-figure__caption">${caption}</figcaption>` : ''}
     </figure>`;
   });
 

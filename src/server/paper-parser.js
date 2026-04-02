@@ -220,7 +220,35 @@ function parseArxivHTML(html, paperId) {
     }
   }
 
-  // 3. Fallback for papers with non-standard section structure
+  // 3. Extract all figures from the full HTML (they often sit between/after sections)
+  const figRegex = /<figure[^>]*id="([^"]*)"[^>]*>([\s\S]*?)<\/figure>/gi;
+  const figures = [];
+  let fMatch;
+  while ((fMatch = figRegex.exec(html)) !== null) {
+    const figId = fMatch[1];
+    const figContent = fMatch[2];
+    const imgMatch = figContent.match(/<img[^>]*src="([^"]*)"[^>]*>/i);
+    const captionMatch = figContent.match(/<figcaption[^>]*>([\s\S]*?)<\/figcaption>/i);
+
+    if (imgMatch) {
+      let src = imgMatch[1];
+      if (!src.startsWith('http') && !src.startsWith('data:')) {
+        src = `https://arxiv.org/html/${src}`;
+      }
+      const caption = captionMatch ? stripToText(captionMatch[1]) : '';
+      figures.push(`<scan-figure src="${src}"><scan-caption>${caption}</scan-caption></scan-figure>`);
+    }
+  }
+
+  if (figures.length > 0) {
+    sections.push({
+      id: 'figures',
+      title: 'Figures',
+      paragraphs: figures,
+    });
+  }
+
+  // 4. Fallback for papers with non-standard section structure
   if (sections.length <= 1) {
     const mainMatch = html.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
     if (mainMatch) {
