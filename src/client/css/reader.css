@@ -364,6 +364,9 @@
 .scan-highlight[data-color="#bae1ff"] { background: rgba(186, 225, 255, 0.3); color: #d0e8ff; }
 .scan-highlight[data-color="#ffffba"] { background: rgba(255, 255, 186, 0.3); color: #ffffd0; }
 
+/* Pending highlight (shown immediately on color pick, before save) */
+.scan-highlight--pending { opacity: 0.7; }
+
 /* Hover preview on highlight — click to pin */
 .highlight-preview {
   position: absolute;

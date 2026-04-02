@@ -265,7 +265,7 @@ function setupEventListeners() {
     }
   });
 
-  // Color pick
+  // Color pick → immediately highlight, then show comment input
   popup.querySelectorAll('.highlight-popup__color').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -275,12 +275,26 @@ function setupEventListeners() {
       if (!pendingHighlight) return;
       pendingHighlight.color = color;
 
-      // Show comment input near the selection — position: fixed → viewport coords
-      const selRange = pendingHighlight.range;
-      const selRect = selRange.getBoundingClientRect();
+      // Immediately wrap the selected text in a colored span (preview highlight)
+      try {
+        const range = pendingHighlight.range;
+        const previewSpan = document.createElement('span');
+        previewSpan.className = 'scan-highlight scan-highlight--pending';
+        previewSpan.dataset.color = color;
+        range.surroundContents(previewSpan);
+        pendingHighlight.previewSpan = previewSpan;
+      } catch (err) {
+        // surroundContents can fail on complex selections — that's OK, highlight will apply on save
+      }
 
-      annotInput.style.left = Math.max(20, selRect.left) + 'px';
-      annotInput.style.top = (selRect.bottom + 8) + 'px';
+      window.getSelection().removeAllRanges();
+
+      // Show comment input near the highlighted text
+      const target = pendingHighlight.previewSpan || { getBoundingClientRect: () => pendingHighlight.range.getBoundingClientRect() };
+      const rect = target.getBoundingClientRect();
+
+      annotInput.style.left = Math.max(20, rect.left) + 'px';
+      annotInput.style.top = (rect.bottom + 8) + 'px';
       annotInput.classList.add('visible');
       document.getElementById('annotation-comment').value = '';
       document.getElementById('annotation-comment').focus();
@@ -291,6 +305,12 @@ function setupEventListeners() {
   document.getElementById('annotation-save').addEventListener('click', () => {
     if (!pendingHighlight) return;
     const comment = document.getElementById('annotation-comment').value.trim();
+
+    // Remove the temporary preview span (applyHighlights will re-create it properly)
+    if (pendingHighlight.previewSpan) {
+      const text = pendingHighlight.previewSpan.textContent;
+      pendingHighlight.previewSpan.replaceWith(document.createTextNode(text));
+    }
 
     const annotation = {
       id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
@@ -312,8 +332,12 @@ function setupEventListeners() {
     notify(comment ? 'Highlight + comment saved' : 'Highlight saved', 'success');
   });
 
-  // Cancel annotation
+  // Cancel annotation — also remove preview span
   document.getElementById('annotation-cancel').addEventListener('click', () => {
+    if (pendingHighlight?.previewSpan) {
+      const text = pendingHighlight.previewSpan.textContent;
+      pendingHighlight.previewSpan.replaceWith(document.createTextNode(text));
+    }
     annotInput.classList.remove('visible');
     pendingHighlight = null;
   });
@@ -360,9 +384,29 @@ function setupEventListeners() {
 
 // ─── APPLY HIGHLIGHTS TO DOM ───
 function applyHighlights() {
+  const bodyEls = document.querySelectorAll('.reader-section__body');
+
+  // STEP 1: Strip ALL existing highlights back to plain text (prevents doubles)
+  bodyEls.forEach(bodyEl => {
+    bodyEl.querySelectorAll('.scan-highlight').forEach(hl => {
+      // Get just the text content (strip the preview span inside)
+      const textOnly = hl.childNodes[0]?.nodeType === 3 ? hl.childNodes[0].textContent : hl.textContent.split('\n')[0];
+      const textNode = document.createTextNode(hl.textContent.replace(/\n.*$/s, ''));
+      // Actually, just grab text before the preview span
+      let raw = '';
+      for (const child of hl.childNodes) {
+        if (child.nodeType === 3) raw += child.textContent;
+        else if (!child.classList?.contains('highlight-preview')) raw += child.textContent;
+        else break;
+      }
+      hl.replaceWith(document.createTextNode(raw));
+    });
+    // Merge adjacent text nodes
+    bodyEl.normalize();
+  });
+
   if (!annotations.length) return;
 
-  const bodyEls = document.querySelectorAll('.reader-section__body');
   // Process longest annotations first to avoid overlap issues
   const sorted = [...annotations].sort((a, b) => b.text.length - a.text.length);
 
@@ -388,92 +432,76 @@ function applyHighlights() {
     return `<span class="highlight-preview"><span class="highlight-preview__no-comment">No comment</span></span>`;
   }
 
+  // Single-pass: walk text nodes only (no innerHTML regex — prevents broken nesting)
   bodyEls.forEach(bodyEl => {
     sorted.forEach(ann => {
-      // Walk text nodes to find the annotation text
-      const walker = document.createTreeWalker(bodyEl, NodeFilter.SHOW_TEXT, null);
-      let node;
+      const annNorm = ann.text.replace(/\s+/g, ' ').trim();
       let found = false;
 
-      while ((node = walker.nextNode()) && !found) {
-        // Skip if already inside a highlight
-        if (node.parentElement.closest('.scan-highlight')) continue;
+      // Strategy: walk all text nodes, try exact match, then normalized match
+      const tryMatch = () => {
+        const walker = document.createTreeWalker(bodyEl, NodeFilter.SHOW_TEXT, null);
+        let node;
+        while ((node = walker.nextNode())) {
+          if (node.parentElement.closest('.scan-highlight')) continue;
 
-        const idx = node.textContent.indexOf(ann.text);
-        if (idx === -1) continue;
+          const nodeText = node.textContent;
+          const nodeNorm = nodeText.replace(/\s+/g, ' ');
 
-        // Split the text node and wrap the match
-        const before = node.textContent.slice(0, idx);
-        const after = node.textContent.slice(idx + ann.text.length);
+          // Try exact match first, then normalized
+          let idx = nodeText.indexOf(ann.text);
+          let matchText = ann.text;
 
-        const previewHTML = buildPreviewHTML(ann);
+          if (idx === -1) {
+            idx = nodeNorm.indexOf(annNorm);
+            matchText = annNorm;
+          }
 
-        const span = document.createElement('span');
-        span.className = 'scan-highlight';
-        span.dataset.color = ann.color;
-        span.dataset.annotationId = ann.id;
-        span.innerHTML = escapeHTML(ann.text) + previewHTML;
-
-        const parent = node.parentNode;
-        if (before) parent.insertBefore(document.createTextNode(before), node);
-        parent.insertBefore(span, node);
-        if (after) parent.insertBefore(document.createTextNode(after), node);
-        parent.removeChild(node);
-
-        found = true;
-      }
-
-      // Fallback: try normalized whitespace matching across <p> elements
-      if (!found) {
-        const annNorm = ann.text.replace(/\s+/g, ' ').trim();
-        bodyEl.querySelectorAll('p').forEach(p => {
-          if (found) return;
-          const pNorm = p.textContent.replace(/\s+/g, ' ');
-          if (pNorm.includes(annNorm) || pNorm.includes(annNorm.slice(0, 60))) {
-            const escaped = annNorm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const normalized = escaped.replace(/ /g, '\\s+');
-            const regex = new RegExp(normalized, 'i');
-
-            const previewHTML = buildPreviewHTML(ann);
-            const newHTML = p.innerHTML.replace(regex, (match) =>
-              `<span class="scan-highlight" data-color="${ann.color}" data-annotation-id="${ann.id}">${match}${previewHTML}</span>`
-            );
-            if (newHTML !== p.innerHTML) {
-              p.innerHTML = newHTML;
-              found = true;
+          // Try prefix match (first 50 chars)
+          if (idx === -1 && annNorm.length > 50) {
+            const prefix = annNorm.slice(0, 50);
+            idx = nodeNorm.indexOf(prefix);
+            if (idx !== -1) {
+              // Extend to full match length or sentence end
+              const available = nodeNorm.slice(idx);
+              if (available.length >= annNorm.length) {
+                matchText = nodeText.slice(idx, idx + ann.text.length);
+              } else {
+                idx = -1; // Not enough text in this node
+              }
             }
           }
-        });
-      }
 
-      // Last resort: prefix match (first 50 chars) + sentence boundary
-      if (!found) {
-        const prefix = ann.text.replace(/\s+/g, ' ').trim().slice(0, 50);
-        bodyEl.querySelectorAll('p').forEach(p => {
-          if (found) return;
-          const pText = p.textContent.replace(/\s+/g, ' ');
-          const idx = pText.indexOf(prefix);
-          if (idx === -1) return;
+          if (idx === -1) continue;
 
-          // Find the actual text from this point to approximate length
-          const approxEnd = Math.min(idx + ann.text.length + 30, pText.length);
-          let endIdx = pText.indexOf('. ', idx + ann.text.length - 10);
-          if (endIdx === -1 || endIdx > approxEnd) endIdx = idx + ann.text.length;
-          else endIdx += 1; // include the period
-
-          const actualText = pText.slice(idx, endIdx).trim();
-          const escaped = actualText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/ /g, '\\s+');
-          const regex = new RegExp(escaped, 'i');
+          const before = nodeText.slice(0, idx);
+          const matched = nodeText.slice(idx, idx + matchText.length);
+          const after = nodeText.slice(idx + matchText.length);
 
           const previewHTML = buildPreviewHTML(ann);
-          const newHTML = p.innerHTML.replace(regex, (match) =>
-            `<span class="scan-highlight" data-color="${ann.color}" data-annotation-id="${ann.id}">${match}${previewHTML}</span>`
-          );
-          if (newHTML !== p.innerHTML) {
-            p.innerHTML = newHTML;
-            found = true;
-          }
-        });
+          const span = document.createElement('span');
+          span.className = 'scan-highlight';
+          span.dataset.color = ann.color;
+          span.dataset.annotationId = ann.id;
+          span.innerHTML = escapeHTML(matched) + previewHTML;
+
+          const parent = node.parentNode;
+          if (before) parent.insertBefore(document.createTextNode(before), node);
+          parent.insertBefore(span, node);
+          if (after) parent.insertBefore(document.createTextNode(after), node);
+          parent.removeChild(node);
+
+          return true;
+        }
+        return false;
+      };
+
+      found = tryMatch();
+
+      if (!found) {
+        // Normalize the body text nodes (merge fragments) and retry once
+        bodyEl.normalize();
+        found = tryMatch();
       }
     });
   });
@@ -563,12 +591,19 @@ function renderAnnotationList() {
   container.querySelectorAll('.annotation-item').forEach(el => {
     el.addEventListener('click', (e) => {
       if (e.target.closest('.annotation-item__delete')) return;
+      if (e.target.closest('.annotation-item__add-comment')) return;
+      if (e.target.closest('textarea') || e.target.closest('button')) return;
       const id = el.dataset.id;
       const highlight = document.querySelector(`.scan-highlight[data-annotation-id="${id}"]`);
       if (highlight) {
-        highlight.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        const scrollContainer = document.querySelector('.reader-body') || document.documentElement;
+        const headerH = 52;
+        const top = highlight.getBoundingClientRect().top + scrollContainer.scrollTop - headerH - (window.innerHeight / 3);
+        scrollContainer.scrollTo({ top, behavior: 'smooth' });
+        // Flash highlight
         highlight.style.outline = '2px solid #fff';
-        setTimeout(() => { highlight.style.outline = ''; }, 2000);
+        highlight.classList.add('pinned');
+        setTimeout(() => { highlight.style.outline = ''; }, 3000);
       }
     });
   });
