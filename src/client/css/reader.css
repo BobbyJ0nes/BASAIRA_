@@ -873,6 +873,11 @@
   background: rgba(0, 255, 136, 0.08);
 }
 
+.concept-result--active {
+  background: rgba(0, 255, 136, 0.12);
+  border-color: var(--cognition);
+}
+
 .concept-result__passage {
   font-size: 11px;
   color: var(--text-secondary);

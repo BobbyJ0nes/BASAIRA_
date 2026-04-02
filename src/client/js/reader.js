@@ -257,10 +257,13 @@ function setupEventListeners() {
     popup.classList.add('visible');
   });
 
-  // Click elsewhere hides popup
+  // Click elsewhere hides popup (but not during active selection/annotation)
   document.addEventListener('mousedown', (e) => {
-    if (!e.target.closest('.highlight-popup') && !e.target.closest('.annotation-input')) {
-      popup.classList.remove('visible');
+    if (e.target.closest('.highlight-popup') || e.target.closest('.annotation-input')) return;
+    if (e.target.closest('.scan-highlight--pending')) return; // Don't clear during pending highlight
+    popup.classList.remove('visible');
+    // Only hide annotation input if clicking outside it AND outside pending highlight
+    if (!pendingHighlight) {
       annotInput.classList.remove('visible');
     }
   });
@@ -278,13 +281,16 @@ function setupEventListeners() {
       // Immediately wrap the selected text in a colored span (preview highlight)
       try {
         const range = pendingHighlight.range;
+        // Use extractContents + wrap to handle cross-element selections
+        const fragment = range.extractContents();
         const previewSpan = document.createElement('span');
         previewSpan.className = 'scan-highlight scan-highlight--pending';
         previewSpan.dataset.color = color;
-        range.surroundContents(previewSpan);
+        previewSpan.appendChild(fragment);
+        range.insertNode(previewSpan);
         pendingHighlight.previewSpan = previewSpan;
       } catch (err) {
-        // surroundContents can fail on complex selections — that's OK, highlight will apply on save
+        console.log('Preview highlight failed:', err.message);
       }
 
       window.getSelection().removeAllRanges();
@@ -814,10 +820,13 @@ async function exploreConcept(concept) {
       });
     });
 
-    // Click result → scroll to passage in text
+    // Click result → scroll to passage and keep it pinned
     resultsEl.querySelectorAll('.concept-result').forEach((el, i) => {
       el.addEventListener('click', (e) => {
         if (e.target.closest('.concept-result__btn')) return;
+        // Mark active result
+        resultsEl.querySelectorAll('.concept-result').forEach(r => r.classList.remove('concept-result--active'));
+        el.classList.add('concept-result--active');
         scrollToPassage(passages[i].passage);
       });
     });
@@ -908,30 +917,52 @@ function applyConceptHighlight(concept, passage) {
   renderAnnotationList();
 }
 
-function scrollToPassage(text) {
-  // Find the text in the DOM
-  const bodyEls = document.querySelectorAll('.reader-section__body');
-  for (const bodyEl of bodyEls) {
-    // Check if this section contains the text
-    if (!bodyEl.textContent.includes(text.slice(0, 50))) continue;
+let pinnedPassageEl = null; // Track currently pinned passage element
 
-    // Check for existing highlight
-    const existing = bodyEl.querySelector(`.scan-highlight`);
-    if (existing && existing.textContent.includes(text.slice(0, 30))) {
-      existing.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      existing.style.outline = '2px solid var(--cognition)';
-      setTimeout(() => { existing.style.outline = ''; }, 2000);
+function scrollToPassage(text) {
+  const textNorm = text.replace(/\s+/g, ' ').trim();
+  const prefix = textNorm.slice(0, 50);
+
+  // Unpin previous
+  if (pinnedPassageEl) {
+    pinnedPassageEl.style.outline = '';
+    pinnedPassageEl.style.outlineOffset = '';
+    pinnedPassageEl.classList.remove('pinned');
+    pinnedPassageEl = null;
+  }
+
+  // First: check if there's a saved highlight for this text
+  const allHighlights = document.querySelectorAll('.scan-highlight');
+  for (const hl of allHighlights) {
+    const hlText = hl.textContent.replace(/\s+/g, ' ').trim();
+    if (hlText.includes(prefix) || textNorm.includes(hlText.slice(0, 50))) {
+      const scrollContainer = document.querySelector('.reader-body') || document.documentElement;
+      const top = hl.getBoundingClientRect().top + scrollContainer.scrollTop - 52 - (window.innerHeight / 3);
+      scrollContainer.scrollTo({ top, behavior: 'smooth' });
+      hl.classList.add('pinned');
+      hl.style.outline = '2px solid var(--cognition)';
+      hl.style.outlineOffset = '2px';
+      pinnedPassageEl = hl;
       return;
     }
+  }
 
-    // Find the paragraph containing this text
+  // Fallback: find the paragraph containing this text and outline it
+  const bodyEls = document.querySelectorAll('.reader-section__body');
+  for (const bodyEl of bodyEls) {
+    const bodyText = bodyEl.textContent.replace(/\s+/g, ' ');
+    if (!bodyText.includes(prefix)) continue;
+
     const paras = bodyEl.querySelectorAll('p');
     for (const p of paras) {
-      if (p.textContent.includes(text.slice(0, 50))) {
-        p.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        p.style.outline = '1px solid var(--cognition)';
+      const pText = p.textContent.replace(/\s+/g, ' ');
+      if (pText.includes(prefix)) {
+        const scrollContainer = document.querySelector('.reader-body') || document.documentElement;
+        const top = p.getBoundingClientRect().top + scrollContainer.scrollTop - 52 - (window.innerHeight / 3);
+        scrollContainer.scrollTo({ top, behavior: 'smooth' });
+        p.style.outline = '2px solid var(--cognition)';
         p.style.outlineOffset = '4px';
-        setTimeout(() => { p.style.outline = ''; p.style.outlineOffset = ''; }, 2000);
+        pinnedPassageEl = p;
         return;
       }
     }
