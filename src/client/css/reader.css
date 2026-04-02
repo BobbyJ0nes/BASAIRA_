@@ -327,6 +327,65 @@
   hyphens: auto;
 }
 
+/* ─── MATH (KaTeX) ─── */
+.scan-math {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  color: var(--text-primary);
+}
+
+.scan-math--inline {
+  display: inline;
+  padding: 0 2px;
+}
+
+.scan-math--block {
+  display: block;
+  text-align: center;
+  margin: 20px 0;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border-left: 2px solid var(--border);
+  overflow-x: auto;
+}
+
+.scan-math--error {
+  color: var(--cybernetics);
+  font-size: 0.85em;
+  opacity: 0.7;
+}
+
+/* KaTeX colour overrides for dark theme */
+.katex { color: var(--text-primary); }
+.katex .mord, .katex .mbin, .katex .mrel,
+.katex .mopen, .katex .mclose, .katex .mpunct,
+.katex .mop { color: var(--text-primary); }
+
+/* ─── FIGURES ─── */
+.scan-figure {
+  display: block;
+  margin: 24px 0;
+  text-align: center;
+}
+
+.scan-figure img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.scan-figure__caption {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-top: 8px;
+  padding: 0 16px;
+  text-align: left;
+}
+
 .reader-article__tags {
   margin-top: 32px;
   padding-top: 24px;

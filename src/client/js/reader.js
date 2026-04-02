@@ -179,7 +179,7 @@ function renderPaper() {
     sectionEl.innerHTML = `
       <div class="${titleTag}">${escapeHTML(section.title)}</div>
       <div class="reader-section__body" data-section="${section.id}">
-        ${paragraphs.map(para => `<p>${para}</p>`).join('')}
+        ${paragraphs.map(para => `<p>${renderRichContent(para)}</p>`).join('')}
       </div>
     `;
     contentEl.appendChild(sectionEl);
@@ -187,6 +187,9 @@ function renderPaper() {
 
   // Apply existing highlights
   applyHighlights();
+
+  // Render LaTeX math elements
+  renderMathElements();
 
   // Tags
   document.getElementById('reader-tags').innerHTML = p.tags
@@ -511,10 +514,83 @@ function applyHighlights() {
       }
     });
   });
+
+  // Re-render math after highlight DOM changes
+  renderMathElements();
 }
 
 function escapeHTML(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// Convert scan-math and scan-figure placeholders to renderable HTML
+function renderRichContent(text) {
+  let html = text;
+
+  // Escape normal text but preserve our scan-* elements
+  // Split on scan-* tags, escape the text parts, rejoin
+  const parts = html.split(/(<scan-(?:math|figure|caption)[^>]*>[\s\S]*?<\/scan-(?:math|figure|caption)>|<scan-math[^>]*><\/scan-math>)/g);
+  html = parts.map(part => {
+    if (part.startsWith('<scan-')) return part; // Preserve our elements
+    return escapeHTML(part);
+  }).join('');
+
+  // Convert <scan-math> to KaTeX-renderable spans
+  // Display math
+  html = html.replace(/<scan-math display="block" latex="([^"]*)">\s*<\/scan-math>/g, (_, latex) => {
+    const decoded = latex.replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+    return `<span class="scan-math scan-math--block" data-latex="${latex}">${escapeHTML(decoded)}</span>`;
+  });
+
+  // Inline math
+  html = html.replace(/<scan-math latex="([^"]*)">\s*<\/scan-math>/g, (_, latex) => {
+    const decoded = latex.replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+    return `<span class="scan-math scan-math--inline" data-latex="${latex}">${escapeHTML(decoded)}</span>`;
+  });
+
+  // Convert <scan-figure> to img elements
+  html = html.replace(/<scan-figure src="([^"]*)">([\s\S]*?)<\/scan-figure>/g, (_, src, inner) => {
+    const captionMatch = inner.match(/<scan-caption>([\s\S]*?)<\/scan-caption>/);
+    const caption = captionMatch ? captionMatch[1] : '';
+    return `<figure class="scan-figure">
+      <img src="${src}" alt="${escapeHTML(caption)}" loading="lazy" />
+      ${caption ? `<figcaption class="scan-figure__caption">${escapeHTML(caption)}</figcaption>` : ''}
+    </figure>`;
+  });
+
+  return html;
+}
+
+// Render all KaTeX math elements in the document (call after DOM is built)
+function renderMathElements() {
+  if (typeof katex === 'undefined') {
+    // KaTeX not loaded yet — retry after a short delay
+    setTimeout(renderMathElements, 200);
+    return;
+  }
+
+  document.querySelectorAll('.scan-math').forEach(el => {
+    const latex = el.dataset.latex
+      .replace(/&quot;/g, '"')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>');
+    const isBlock = el.classList.contains('scan-math--block');
+
+    try {
+      katex.render(latex, el, {
+        displayMode: isBlock,
+        throwOnError: false,
+        strict: false,
+        trust: true,
+        output: 'html',
+      });
+    } catch (err) {
+      // Leave the raw LaTeX text as fallback
+      el.title = `LaTeX: ${latex}`;
+      el.classList.add('scan-math--error');
+    }
+  });
 }
 
 // Global handler for "add comment" from hover preview
