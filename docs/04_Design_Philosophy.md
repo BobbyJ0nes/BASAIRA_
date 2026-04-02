@@ -101,11 +101,30 @@ The left-rail navigation (collapsed numbers that expand to section titles on hov
 
 Several design constraints are deliberate:
 
+### Mathematical Notation
+LaTeX equations are rendered by KaTeX in the reader, styled to match the dark theme:
+
+- **Inline math** inherits `var(--text-primary)` colour, flowing seamlessly with body text
+- **Display math** is centred in a subtly tinted block with a left border accent — the same accent pattern used by hover previews and inline comment inputs, creating visual consistency across interactive elements
+- KaTeX's default sizing is used — equations feel part of the paper, not overlaid decoration
+- If rendering fails, raw LaTeX is shown in amber (`var(--cybernetics)` colour) — clearly a fallback, not a broken state
+
+### Paper Figures
+Figures load directly from arXiv's servers and are styled to sit within the reading flow:
+
+- Bordered with `var(--border)` and a subtle white-tint background to contrast with the dark page
+- Captions in mono font below, matching the annotation/label style
+- Figures are collected into a "Figures" section at the end — this mirrors how many academic papers present figures, and avoids layout complexity of inline figure placement
+
+---
+
+## Intentional Constraints
+
 | Constraint | Rationale |
 |-----------|-----------|
 | Dark mode only | The neon colours only work on dark. Light mode would require a completely different palette. |
-| No images | Paper figures are not extracted. Text-only keeps the reader fast and the aesthetic consistent. |
-| No PDF embedding | PDFs break the aesthetic and UX. Full text is extracted and rendered natively. |
+| No PDF embedding | PDFs break the aesthetic and UX. Full text is extracted and rendered natively via arXiv HTML. |
 | No user accounts | This is a personal tool. localStorage is the only persistence layer. |
 | No real-time updates | Papers refresh on load or button click, not via WebSocket. Simplicity over liveness. |
 | Maximum 600 edges | More edges make the graph unreadable. The cap forces the system to show only meaningful connections. |
+| Figures at end, not inline | arXiv HTML places figures after sections. Attempting to reflow them inline would require cross-referencing figure citations — complexity not justified for V1. |

@@ -77,6 +77,9 @@ SCAN/
 | Overlap papers | ~93–105 |
 | Research domains | 5 |
 | Source files | 16 |
-| Total LOC | ~6,300 |
+| Total LOC | ~6,800 |
 | Dependencies | 3 (`express`, `xml2js`, `dotenv`) |
+| CDN dependencies | 2 (D3.js v7, KaTeX v0.16) |
 | External APIs | arXiv, Gemini 2.5 Flash |
+| Math elements/paper | ~100–300 (rendered by KaTeX) |
+| Figures/paper | 0–10 (loaded from arXiv) |

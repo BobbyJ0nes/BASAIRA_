@@ -16,11 +16,15 @@ All client-side JavaScript is vanilla ES — no imports, no modules, just `<scri
 
 ### Load Order (reader.html)
 ```html
+<link href="katex.min.css" />            <!-- KaTeX styles (CDN) -->
+<script defer src="katex.min.js"></script> <!-- KaTeX renderer (CDN) -->
 <script src="js/store.js"></script>      <!-- 1. State manager -->
-<script src="js/reader.js"></script>     <!-- 2. Reader controller (needs Store) -->
+<script src="js/reader.js"></script>     <!-- 2. Reader controller (needs Store, KaTeX) -->
 ```
 
-D3.js v7 is loaded from CDN (`https://d3js.org/d3.v7.min.js`).
+### CDN Dependencies
+- **D3.js v7** (`d3.v7.min.js`) — force graph simulation, SVG rendering
+- **KaTeX v0.16.21** (`katex.min.js` + `katex.min.css`) — LaTeX math rendering in the reader
 
 ---
 
@@ -176,10 +180,12 @@ When multiple domains are selected, a green badge appears: "15 overlap papers ac
 The largest single file (~1,060 lines). Manages the entire reader view:
 
 1. **`initReader()`** — Fetch paper content + all papers (for edges), load annotations, render
-2. **`renderPaper()`** — Build section nav, render full text, apply highlights, bind interactions
-3. **`setupEventListeners()`** — Text selection → popup, colour pick → preview, save/cancel, click-to-pin
-4. **`applyHighlights()`** — Strip existing → re-walk text nodes → wrap matches (see [[07_Highlight_System]])
-5. **`renderAnnotationList()`** — Sidebar annotation cards with scroll-to-highlight
-6. **`setupConceptExplorer()`** — Concept input, suggestion loading, passage finding, highlight-all
-7. **`scrollToPassage()`** — Find and pin a passage in the document
-8. **`saveToVault()`** — POST annotations + notes to vault endpoint
+2. **`renderPaper()`** — Build section nav, render full text with `renderRichContent()`, apply highlights, render math, bind interactions
+3. **`renderRichContent(para)`** — Converts `<scan-math>` and `<scan-figure>` placeholders to renderable HTML while escaping all other content. Uses a placeholder-swap approach to avoid escaping the custom elements.
+4. **`renderMathElements()`** — Finds all `.scan-math` elements in the DOM and calls `katex.render()` on each. Handles both inline and display modes. Falls back to raw LaTeX text on error. Retries if KaTeX hasn't loaded yet.
+5. **`setupEventListeners()`** — Text selection → popup, colour pick → preview, save/cancel, click-to-pin
+6. **`applyHighlights()`** — Strip existing → re-walk text nodes → wrap matches → re-render math (see [[07_Highlight_System]])
+7. **`renderAnnotationList()`** — Sidebar annotation cards with scroll-to-highlight
+8. **`setupConceptExplorer()`** — Concept input, suggestion loading, passage finding, highlight-all
+9. **`scrollToPassage()`** — Find and pin a passage in the document
+10. **`saveToVault()`** — POST annotations + notes to vault endpoint

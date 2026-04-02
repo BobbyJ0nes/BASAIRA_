@@ -101,12 +101,13 @@ The client handles all rendering, state management, and user interaction without
 5. `BgCanvas.init()` spawns 80 drifting particles on a separate canvas
 
 ### Paper Reader Load
-1. Browser loads `reader.html?id=2603.30004v1`
+1. Browser loads `reader.html?id=2603.30004v1` (loads KaTeX CSS/JS from CDN)
 2. `reader.js` calls `initReader()` → fetches `/api/papers/:id/content` and `/api/papers`
-3. Content endpoint triggers `paper-parser.js` → fetches `https://arxiv.org/html/{id}` → parses LaTeXML HTML into structured sections
-4. Sections rendered with paragraph splitting, left rail nav built
-5. Existing annotations loaded from `localStorage`
-6. `applyHighlights()` walks text nodes and wraps matched text in styled spans
+3. Content endpoint triggers `paper-parser.js` → fetches `https://arxiv.org/html/{id}` → parses LaTeXML HTML into structured sections, preserving math as `<scan-math>` placeholders and figures as `<scan-figure>` placeholders
+4. Sections rendered with `renderRichContent()` converting placeholders to KaTeX-ready spans and `<figure>` elements. Left rail nav built.
+5. `renderMathElements()` calls KaTeX on all `.scan-math` spans → LaTeX rendered to typeset notation
+6. Existing annotations loaded from `localStorage`
+7. `applyHighlights()` walks text nodes, wraps matched text, then re-renders math
 
 ### Concept Explorer Flow
 1. User clicks concept input → focus triggers `GET /api/papers/:id/concepts`

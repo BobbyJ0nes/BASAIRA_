@@ -174,11 +174,32 @@ This collapses multiple spaces, newlines, and tabs into single spaces. The match
 
 ---
 
+## Interaction with Math Rendering
+
+The highlight system and KaTeX math rendering share the same DOM. This creates an ordering dependency:
+
+1. `applyHighlights()` strips all highlights, walks text nodes, wraps matches
+2. This process destroys any KaTeX-rendered elements (since KaTeX replaces `.scan-math` spans with complex DOM trees)
+3. Therefore, `renderMathElements()` is called at the end of every `applyHighlights()` invocation
+
+The `renderRichContent()` function in the paragraph rendering pipeline uses a **placeholder swap** approach to coexist with `escapeHTML()`:
+1. Replace all `<scan-math>` and `<scan-figure>` tags with `%%SCANMATH0%%` / `%%SCANFIG0%%` placeholders
+2. Escape the remaining text with `escapeHTML()`
+3. Swap the placeholders back with the original tags
+4. Convert `<scan-math>` to `<span class="scan-math" data-latex="...">` and `<scan-figure>` to `<figure>` elements
+
+This prevents the custom elements from being HTML-escaped while still protecting against XSS in paper text content.
+
+The highlight text-node walker skips `.scan-math` and `.katex` elements — math content is not highlightable (it would break the KaTeX DOM tree). This means annotations containing mathematical notation may not find their exact text match if the match spans across a math element boundary.
+
+---
+
 ## Performance Considerations
 
-For a typical paper with 5-10 annotations:
-- Strip: ~1ms (DOM manipulation on ~20 highlight spans)
+For a typical paper with 5-10 annotations and ~300 math elements:
+- Strip highlights: ~1ms
 - Sort + walk: ~2ms per annotation (TreeWalker is fast)
-- Total re-render: ~15-20ms
+- KaTeX re-render: ~30-50ms for ~300 equations
+- Total re-render: ~50-70ms
 
 This is imperceptible. The system could handle 50+ annotations without noticeable lag.

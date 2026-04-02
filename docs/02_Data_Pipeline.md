@@ -112,14 +112,27 @@ The HTML uses standardised CSS classes from the LaTeXML toolchain:
 | `.ltx_subsection` | Subsection (2.1, 2.2, etc.) |
 | `.ltx_title` | Section heading |
 | `.ltx_para`, `.ltx_p` | Paragraphs |
+| `.ltx_Math` | Inline or display math (contains MathML + LaTeX source) |
+| `.ltx_figure` | Figures with images and captions |
 | `.ltx_abstract` | Abstract block |
 | `.ltx_bibliography` | References (excluded) |
 
-The parser:
+The parser performs **rich content conversion** rather than plain text stripping:
+
 1. Extracts the abstract from `.ltx_abstract`
 2. Walks `<section>` elements with IDs like `S1`, `S2.SS1`, etc.
 3. For each section, extracts the heading and all paragraphs
-4. Returns structured `{ sections: [{ id, title, paragraphs, isSubsection }] }`
+4. **Math preservation**: `<math alttext="w_{ij}" display="inline">` → `<scan-math latex="w_{ij}">` placeholder. The LaTeX source is taken from the `alttext` attribute (every arXiv math element has this). Both inline and display (block) modes are preserved.
+5. **Figure extraction**: `<figure>` elements are collected from the full article HTML (they often sit between or after sections, not inside them). Image `src` attributes are rewritten to absolute arXiv URLs (`https://arxiv.org/html/{id}/fig1.jpg`). Captions are extracted from `<figcaption>`. Figures are appended as a dedicated "Figures" section.
+6. Remaining HTML tags are stripped, entities decoded, whitespace normalised
+7. Returns structured `{ sections: [{ id, title, paragraphs, isSubsection }] }` where paragraph content may contain `<scan-math>` and `<scan-figure>` placeholders
+
+### Client-Side Rendering
+The reader (`reader.js`) processes these placeholders:
+- **`<scan-math>`** → rendered by [KaTeX](https://katex.org/) (loaded from CDN) into properly typeset mathematical notation. Inline math flows with text; display math is centred with a left border accent.
+- **`<scan-figure>`** → rendered as `<figure>` with `<img>` (loading from arXiv) and `<figcaption>`. Images are lazy-loaded and fit within the reader's max-width.
+
+KaTeX re-renders after every `applyHighlights()` call since highlight DOM manipulation can destroy rendered math elements. See [[07_Highlight_System]] for details.
 
 ### Fallback Chain
 ```

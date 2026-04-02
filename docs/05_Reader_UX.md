@@ -48,6 +48,24 @@ Full paper text rendered in structured sections with proper headings (`<h2>` for
 
 A source badge at top indicates: `FULL TEXT · 11 SECTIONS` (green) or `Abstract only · Open PDF for full paper` (amber).
 
+### Math Rendering
+LaTeX equations are rendered client-side by [KaTeX](https://katex.org/) (loaded from CDN, ~200KB):
+
+- **Inline math** flows seamlessly with body text — variables like *w*ᵢⱼ, *p*(*w*), Greek letters *α*, *ε*, *μ* render at text size
+- **Display math** (block equations) renders centred with a subtle left border accent and horizontal scroll for wide equations
+- The LaTeX source comes from arXiv's `<math alttext="...">` attribute — every equation in the HTML carries its original LaTeX
+- If KaTeX fails to render a particular expression (rare), the raw LaTeX string is shown as fallback with an amber tint
+- Math re-renders after every highlight operation since DOM manipulation can destroy KaTeX output
+
+### Figures
+Paper diagrams and plots are extracted from arXiv's HTML and rendered as images:
+
+- Images load directly from arXiv's servers (e.g., `https://arxiv.org/html/2603.29597v1/fig1.jpg`) — no proxy needed, arXiv sets `Access-Control-Allow-Origin: *`
+- Figures appear in a dedicated **Figures** section at the end of the paper (arXiv HTML typically places figures after the main text, not inline)
+- Each figure has its caption rendered below in mono font
+- Images are lazy-loaded and scale to fit the reader's max-width
+- Not all papers have figures in their HTML version — depends on the LaTeX source
+
 ### Right Sidebar (collapsible)
 Four sections stacked vertically:
 1. **Annotations** — saved highlights with quoted text, comments, and remove buttons
