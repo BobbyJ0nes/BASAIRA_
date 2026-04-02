@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SCAN Reader</title>
+  <link rel="stylesheet" href="css/scan.css">
+  <link rel="stylesheet" href="css/reader.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◉</text></svg>">
+</head>
+<body class="reader-body">
+  <div class="reader">
+    <!-- ═══ READER HEADER ═══ -->
+    <header class="reader-header">
+      <a href="/" class="reader-header__back" title="Back to SCAN">← SCAN</a>
+      <div class="reader-header__actions">
+        <button class="btn btn--icon" id="reader-save" title="Read Later">☆</button>
+        <button class="btn btn--icon" id="reader-vault" title="Save to Obsidian Vault">⤓ Vault</button>
+        <button class="btn btn--icon" id="reader-pdf" title="Open PDF">PDF</button>
+        <button class="btn btn--icon" id="reader-arxiv" title="Open on arXiv">arXiv</button>
+      </div>
+    </header>
+
+    <!-- ═══ READER BODY ═══ -->
+    <div class="reader-layout">
+      <!-- Main reading pane -->
+      <article class="reader-article" id="reader-article">
+        <div class="reader-article__domains" id="reader-domains"></div>
+        <h1 class="reader-article__title" id="reader-title"></h1>
+        <div class="reader-article__meta" id="reader-meta"></div>
+        <div class="reader-article__authors" id="reader-authors"></div>
+
+        <div class="reader-article__content" id="reader-content">
+          <!-- Sections rendered here -->
+        </div>
+
+        <div class="reader-article__tags" id="reader-tags"></div>
+
+        <!-- Highlight color popup — inside article for correct absolute positioning -->
+        <div class="highlight-popup" id="highlight-popup">
+          <button class="highlight-popup__color" data-color="#ffb3ba" style="background:#ffb3ba" title="Pink"></button>
+          <button class="highlight-popup__color" data-color="#bae1ff" style="background:#bae1ff" title="Blue"></button>
+          <button class="highlight-popup__color" data-color="#ffffba" style="background:#ffffba" title="Yellow"></button>
+        </div>
+
+        <!-- Annotation comment input — inside article for correct absolute positioning -->
+        <div class="annotation-input" id="annotation-input">
+          <textarea id="annotation-comment" placeholder="Add a comment (optional)..." rows="2"></textarea>
+          <div class="annotation-input__actions">
+            <button class="btn" id="annotation-cancel">Cancel</button>
+            <button class="btn btn--accent" id="annotation-save">Save</button>
+          </div>
+        </div>
+      </article>
+
+      <!-- Annotations sidebar -->
+      <aside class="reader-sidebar" id="reader-sidebar">
+        <div class="reader-sidebar__section">
+          <div class="reader-sidebar__title">Annotations</div>
+          <div class="reader-sidebar__list" id="annotation-list">
+            <div class="reader-sidebar__empty">Select text to highlight</div>
+          </div>
+        </div>
+
+        <div class="reader-sidebar__section">
+          <div class="reader-sidebar__title">Notes</div>
+          <textarea class="reader-sidebar__notes" id="reader-notes" placeholder="Add your notes..."></textarea>
+        </div>
+
+        <div class="reader-sidebar__section">
+          <div class="reader-sidebar__title">Concept Explorer</div>
+          <div class="concept-explorer" id="concept-explorer">
+            <div class="concept-explorer__input-wrap">
+              <input type="text" class="concept-explorer__input" id="concept-input" placeholder="Explore a concept..." autocomplete="off" />
+              <button class="concept-explorer__go" id="concept-go" title="Find passages">⟳</button>
+            </div>
+            <div class="concept-explorer__suggestions" id="concept-suggestions"></div>
+            <div class="concept-explorer__status" id="concept-status"></div>
+            <div class="concept-explorer__results" id="concept-results"></div>
+          </div>
+        </div>
+
+        <div class="reader-sidebar__section">
+          <div class="reader-sidebar__title">Connected Papers</div>
+          <div id="reader-connected" class="reader-sidebar__connected"></div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Sidebar toggle -->
+    <button class="sidebar-toggle" id="sidebar-toggle" title="Toggle sidebar">◀</button>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+  </div>
+
+  <script src="js/store.js"></script>
+  <script src="js/reader.js"></script>
+</body>
+</html>

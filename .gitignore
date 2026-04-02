@@ -1,0 +1,30 @@
+# ═══════════════════════════════════════════
+# SCAN — Git Ignore
+# ═══════════════════════════════════════════
+
+# Dependencies
+node_modules/
+
+# Environment (contains API keys)
+.env
+
+# Cached data
+src/data/papers-cache.json
+
+# Logs
+*.log
+/tmp/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# PID files
+*.pid

@@ -1,0 +1,24 @@
+{
+  "name": "scan",
+  "version": "1.0.0",
+  "description": "Systematic Curation & Analysis Network — Research paper discovery engine",
+  "main": "src/server/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server/index.js",
+    "fetch": "node src/server/fetch-papers.js",
+    "dev": "node --watch src/server/index.js"
+  },
+  "keywords": [
+    "research",
+    "arxiv",
+    "knowledge-graph",
+    "net-art"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^17.4.0",
+    "express": "^4.21.0",
+    "xml2js": "^0.6.2"
+  }
+}

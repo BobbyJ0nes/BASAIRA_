@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SCAN — Systematic Curation & Analysis Network</title>
+  <link rel="stylesheet" href="css/scan.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◉</text></svg>">
+</head>
+<body>
+  <div id="app">
+    <!-- ═══ HEADER ═══ -->
+    <header class="header">
+      <div class="header__logo">
+        <div>
+          <div class="header__logo-text">SCAN<span class="header__logo-cursor"></span></div>
+          <div class="header__subtitle">systematic curation & analysis network</div>
+        </div>
+      </div>
+
+      <div class="header__search">
+        <input type="text" id="search-input" placeholder="search papers, authors, tags..." autocomplete="off" spellcheck="false">
+      </div>
+
+      <div class="header__actions">
+        <div class="header__stats">
+          <span id="stat-papers">0</span> papers · <span id="stat-edges">0</span> links · <span id="stat-overlap">0</span> overlap
+        </div>
+        <button class="btn btn--icon" id="btn-refresh" title="Refresh data from arXiv">⟳</button>
+        <button class="btn btn--icon" id="btn-export" title="Export vault">⤓</button>
+      </div>
+    </header>
+
+    <!-- ═══ SIDEBAR ═══ -->
+    <aside class="sidebar">
+      <!-- View toggle -->
+      <div class="sidebar__section">
+        <div class="sidebar__section-title">View</div>
+        <div class="view-toggles">
+          <button class="btn btn--active" id="btn-view-graph">◉ Graph</button>
+          <button class="btn" id="btn-view-list">☰ List</button>
+        </div>
+      </div>
+
+      <!-- Domains -->
+      <div class="sidebar__section">
+        <div class="sidebar__section-title">Domains</div>
+        <div id="domain-filters"></div>
+      </div>
+
+      <!-- Tags -->
+      <div class="sidebar__section">
+        <div class="sidebar__section-title">Top Tags</div>
+        <div class="tag-cloud" id="tag-cloud"></div>
+      </div>
+
+      <!-- Read Later -->
+      <div class="sidebar__section" style="flex:1;">
+        <div class="sidebar__section-title">Read Later <span id="queue-count">(0)</span></div>
+        <ul class="queue-list" id="queue-list">
+          <li class="queue-empty">No papers saved yet</li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- ═══ MAIN ═══ -->
+    <main class="main">
+      <!-- Generative background -->
+      <canvas id="bg-canvas"></canvas>
+
+      <!-- Graph view -->
+      <div id="graph-container"></div>
+
+      <!-- List view -->
+      <div id="list-container"></div>
+
+      <!-- Detail panel -->
+      <div class="detail-panel" id="detail-panel">
+        <div class="detail-panel__header">
+          <div class="detail-panel__actions">
+            <button class="btn btn--icon" id="panel-save" title="Read Later">☆</button>
+            <button class="btn btn--accent" id="panel-read" title="Open in Reader" style="font-size:11px">Read</button>
+            <button class="btn btn--icon" id="panel-pdf" title="Open PDF">PDF</button>
+            <button class="btn btn--icon" id="panel-arxiv" title="Open on arXiv">arXiv</button>
+            <button class="btn btn--icon" id="panel-vault" title="Save to Obsidian Vault">⤓ Vault</button>
+          </div>
+          <button class="detail-panel__close" id="panel-close">✕</button>
+        </div>
+        <div class="detail-panel__body" id="panel-body">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div class="loading-overlay" id="loading">
+        <div class="loading-text">scanning</div>
+        <div class="loading-bar"><div class="loading-bar__fill"></div></div>
+      </div>
+
+      <!-- Tooltip -->
+      <div class="graph-tooltip" id="tooltip">
+        <div class="graph-tooltip__title" id="tooltip-title"></div>
+        <div class="graph-tooltip__meta" id="tooltip-meta"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Export modal -->
+  <div class="modal-backdrop" id="export-modal">
+    <div class="modal">
+      <div class="modal__title">Export to Vault</div>
+      <div class="modal__content" id="export-content">
+        <p>Export your saved papers as Obsidian-compatible Markdown files.</p>
+        <p style="margin-top:12px;font-family:var(--font-mono);font-size:11px;color:var(--text-muted);" id="export-count">0 papers in queue</p>
+      </div>
+      <div class="modal__actions">
+        <button class="btn" id="export-cancel">Cancel</button>
+        <button class="btn btn--accent" id="export-confirm">Export All</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification -->
+  <div class="notification" id="notification"></div>
+
+  <!-- D3.js -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <!-- App -->
+  <script src="js/store.js"></script>
+  <script src="js/graph.js"></script>
+  <script src="js/background.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
