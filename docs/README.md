@@ -26,10 +26,11 @@ npm start
 **Optional:** [Gemini API key](https://aistudio.google.com/apikey) for the Concept Explorer  
 **Optional:** Obsidian vault path for paper exports
 
-> **Note:** BASIRA_ requires a Node.js server (Express) for the arXiv API, full-text parser, and Gemini integration. It cannot run as a static site on GitHub Pages alone. For hosting, use [Render](https://render.com), [Railway](https://railway.app), or [Vercel](https://vercel.com) (serverless).
+> **Production** is deployed on Vercel + Supabase at [basaira.vercel.app](https://basaira.vercel.app). Auto-deploys on push to `main`.
+> **Local development** uses Express (`npm start` → `localhost:3000`).
 
 ### 📖 Full Documentation
-See [[00_Index]] for the complete documentation — architecture, design philosophy, AI integration, highlight system internals, bug chronicle, and configuration guide.
+See [[00_Index]] for the complete documentation — architecture, design philosophy, AI integration, highlight system internals, deployment guide, and configuration reference.
 
 ---
 

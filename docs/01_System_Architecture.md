@@ -1,17 +1,20 @@
 # System Architecture
 
-> *Back to [[00_Index]]*
+> *Back to [[00_Index]] · See also [[11_Deployment]]*
 
 ## Overview
 
-BASIRA_ is a two-tier application: a Node.js Express server that fetches, parses, and caches research papers, and a vanilla JavaScript frontend that renders them as an interactive knowledge graph. There is no build step, no bundler, no framework — raw ES modules served as static files.
+BASIRA_ is a two-tier application with **dual deployment modes**:
 
-The server handles three categories of work:
+- **Production** ([basaira.vercel.app](https://basaira.vercel.app)): Vercel serves static frontend + serverless API functions, Supabase provides Postgres storage
+- **Development** (`localhost:3000`): Express serves everything, filesystem for caching
+
+The frontend is identical in both modes — vanilla JavaScript with no build step, no bundler, no framework. It calls `/api/*` endpoints that return the same JSON regardless of which backend serves them.
+
+The backend handles three categories of work:
 1. **Data acquisition** — fetching from arXiv API, parsing XML, computing paper relationships
-2. **Content extraction** — pulling full paper text from arXiv HTML pages (LaTeXML format)
+2. **Content extraction** — pulling full paper text from arXiv HTML pages, preserving LaTeX math and figures
 3. **AI operations** — calling Gemini 2.5 Flash for concept extraction and passage finding
-
-The client handles all rendering, state management, and user interaction without any server-side rendering.
 
 ---
 
@@ -161,3 +164,27 @@ BASIRA_ has exactly two HTML pages:
 | `reader.html` | `/reader.html?id={arxivId}` | Full-text reader + highlights + concept explorer |
 
 Navigation between them is standard `<a href>` links (the "Read" button in the detail panel). No client-side routing. This keeps the mental model simple and makes each page independently loadable.
+
+---
+
+## Dual Backend
+
+### Localhost (Express — `src/server/`)
+Single Express process. All data cached in `papers-cache.json` and in-memory Maps. Vault export writes to filesystem. Ideal for development and personal use.
+
+### Production (Vercel — `api/`)
+9 serverless functions mirroring the Express routes. Each function is stateless — reads/writes to Supabase Postgres instead of filesystem. Paper content and AI concepts are cached in Supabase tables to avoid re-fetching.
+
+| Express Route | Vercel Function | Storage |
+|--------------|----------------|---------|
+| `GET /api/papers` | `api/papers.js` | Supabase `papers` + `edges` |
+| `GET /api/stats` | `api/stats.js` | Supabase aggregate queries |
+| `GET /api/domains` | `api/domains.js` | Supabase aggregate |
+| `GET /api/tags` | `api/tags.js` | Supabase aggregate |
+| `GET /api/search?q=` | `api/search.js` | Supabase → in-function TF-IDF |
+| `GET /api/papers/:id/content` | `api/papers/[id]/content.js` | Supabase `paper_content` cache → arXiv HTML |
+| `GET /api/papers/:id/concepts` | `api/papers/[id]/concepts.js` | Supabase `paper_concepts` cache → Gemini |
+| `POST /api/papers/:id/explore` | `api/papers/[id]/explore.js` | Supabase content → Gemini |
+| `POST /api/vault/save` | *Not deployed* | Requires filesystem (localhost only) |
+
+See [[11_Deployment]] for full production architecture details.

@@ -60,7 +60,12 @@ Paper text:
 Gemini 2.5 Flash has a large context window, but sending full 40K+ papers would be slow and expensive. The first 12K characters typically covers the Abstract, Introduction, and Method — the sections where key concepts are most concentrated. This is a pragmatic trade-off between coverage and latency.
 
 ### Caching
-Concepts are cached in a `Map` keyed by paper ID. A paper's concepts are extracted once and then served from memory for all subsequent requests.
+| Mode | Cache | Lifetime |
+|------|-------|----------|
+| Localhost | In-memory `Map` | Server process lifetime |
+| Production | Supabase `paper_concepts` table | Persistent |
+
+A paper's concepts are extracted once and cached. In production, this means the Gemini API is called at most once per paper — subsequent requests are served from Supabase.
 
 ---
 

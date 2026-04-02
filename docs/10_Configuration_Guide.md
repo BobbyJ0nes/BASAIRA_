@@ -2,17 +2,27 @@
 
 > *Back to [[00_Index]]*
 
-## Environment Variables (`.env`)
+## Environment Variables
 
+### Localhost (`.env` file)
 Copy `.env.example` to `.env` and configure:
 
 ```bash
 # Required for Concept Explorer
 GEMINI_API_KEY=your_gemini_api_key_here
 
-# Optional: Obsidian vault integration
+# Optional: Obsidian vault integration (localhost only)
 VAULT_PATH=/path/to/your/obsidian/vault
-VAULT_SCAN_FOLDER=scan
+VAULT_BASIRA_FOLDER=basira
+```
+
+### Production (Vercel dashboard)
+Set in **Settings → Environment Variables**:
+
+```
+GEMINI_API_KEY=your_gemini_api_key_here
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SECRET_KEY=sb_secret_your_key_here
 ```
 
 ### Getting a Gemini API Key
@@ -129,25 +139,27 @@ cp .env.example .env  # Configure API key
 npm start             # → http://localhost:3000
 ```
 
-### Railway (recommended for hosting)
+### Vercel + Supabase (current production)
+The recommended deployment. Already configured and live at [basaira.vercel.app](https://basaira.vercel.app).
+1. Repo auto-deploys on push to `main` via Vercel GitHub integration
+2. Serverless functions in `api/` handle all backend logic
+3. Supabase Postgres stores papers, edges, content cache, concept cache
+4. See [[11_Deployment]] for full details
+
+### Railway (alternative)
 1. Push repo to GitHub
 2. Create a Railway project, connect the repo
-3. Add environment variables in Railway dashboard (`GEMINI_API_KEY`, optionally `VAULT_PATH`)
-4. Railway auto-detects Node.js, runs `npm start`
+3. Add environment variables (`GEMINI_API_KEY`, optionally `VAULT_PATH`)
+4. Railway auto-detects Node.js, runs `npm start` (uses Express server)
 5. Free tier: 500 hours/month, persistent filesystem (cache works)
 
-### Render
+### Render (alternative)
 1. Create a Web Service, connect repo
-2. Build command: `npm install`
-3. Start command: `npm start`
-4. Add environment variables
-5. Free tier: spins down after 15min inactivity (~30s cold start)
-
-### Vercel
-Requires refactoring — Express needs to be split into serverless functions. Not recommended for V1 unless persistence layer is also migrated. See [[01_System_Architecture#Why No Build Step]] for context.
+2. Build command: `npm install`, Start command: `npm start`
+3. Free tier: spins down after 15min inactivity (~30s cold start)
 
 ### GitHub Pages
-**Not supported.** BASIRA_ requires a Node.js server for the API layer (arXiv fetching, Gemini integration, vault writing). GitHub Pages only serves static files.
+**Not supported.** BASIRA_ requires serverless functions or a Node.js server for the API layer.
 
 ---
 

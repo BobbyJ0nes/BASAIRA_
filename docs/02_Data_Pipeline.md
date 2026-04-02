@@ -70,29 +70,23 @@ The full dataset (papers array + edges array) is serialised to JSON and written 
 
 If both yes, it loads from cache (instant startup). Otherwise, it re-fetches from arXiv (takes ~60 seconds due to rate limiting).
 
-Cache structure:
+### Localhost Cache (`papers-cache.json`)
 ```json
 {
   "papers": [
-    {
-      "id": "2603.30004v1",
-      "title": "From Patterns to Policy...",
-      "authors": ["Adi Wijaya", ...],
-      "abstract": "...",
-      "published": "2026-03-31T16:58:15Z",
-      "categories": ["q-bio.NC", "cs.CY"],
-      "domains": ["neuroscience", "cognition"],
-      "tags": ["smart-hospital", "analysis", ...],
-      "isOverlap": true,
-      "arxivUrl": "https://arxiv.org/abs/2603.30004v1",
-      "pdfUrl": "https://arxiv.org/pdf/2603.30004v1"
-    }
+    { "id": "2603.30004v1", "title": "...", "authors": [...], "abstract": "...",
+      "published": "2026-03-31T16:58:15Z", "categories": ["q-bio.NC", "cs.CY"],
+      "domains": ["neuroscience", "cognition"], "tags": ["smart-hospital", ...],
+      "isOverlap": true, "arxivUrl": "...", "pdfUrl": "..." }
   ],
   "edges": [
-    { "source": "2603.30004v1", "target": "2603.29176v1", "weight": 2.3, "sharedTags": ["analysis", "neural"] }
+    { "source": "2603.30004v1", "target": "2603.29176v1", "weight": 2.3, "sharedTags": ["analysis"] }
   ]
 }
 ```
+
+### Production Cache (Supabase)
+The same data lives in the `papers` and `edges` Postgres tables. See [[11_Deployment#Supabase Schema]] for the full schema. Data was seeded from the localhost cache using a batch upsert script.
 
 ---
 
@@ -143,8 +137,14 @@ Try: arxiv.org/html/{id}  (without version)
 Return: null (reader falls back to abstract only)
 ```
 
-### In-Memory Cache
-Fetched full-text is cached in a `Map` keyed by paper ID. This persists for the server's lifetime — a paper is fetched from arXiv HTML at most once per server run.
+### Caching
+
+| Mode | Cache location | Lifetime |
+|------|---------------|----------|
+| Localhost | In-memory `Map` | Server process lifetime |
+| Production | Supabase `paper_content` table | Persistent (until manually cleared) |
+
+On localhost, a paper is fetched from arXiv HTML at most once per server run. In production (Vercel), the parsed content is stored in Supabase after the first fetch and served from the database on all subsequent requests — no re-parsing needed.
 
 ---
 
