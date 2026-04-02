@@ -13,6 +13,8 @@ src/data/papers-cache.json
 
 # Logs
 *.log
+
+# Temp files
 /tmp/
 
 # OS files
