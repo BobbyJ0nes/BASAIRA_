@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-// SCAN State Manager
+// BASIRA_ State Manager
 // ═══════════════════════════════════════════════════════════
 //
 // localStorage-backed reactive store for all user state.
@@ -19,10 +19,10 @@
 //   Store.toggleReadLater('2603.30004v1') → boolean (new state)
 //   Store.on((key, value) => { ... })     → register listener
 //
-// localStorage key: 'scan_state'
+// localStorage key: 'basira_state'
 //
 // ═══════════════════════════════════════════════════════════
-const STORAGE_KEY = 'scan_state';
+const STORAGE_KEY = 'basira_state';
 
 const Store = {
   _state: {

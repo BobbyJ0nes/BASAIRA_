@@ -1,4 +1,4 @@
-# SCAN — Systematic Curation & Analysis Network
+# BASIRA_ — Systematic Curation & Analysis Network
 
 > A research paper discovery engine rendered as a living knowledge graph.  
 > V1 · April 2026
@@ -9,8 +9,8 @@
 
 ```bash
 # Clone and install
-git clone https://github.com/YOUR_USER/SCAN.git
-cd SCAN
+git clone https://github.com/YOUR_USER/BASIRA_.git
+cd BASIRA_
 npm install
 
 # Configure
@@ -26,7 +26,7 @@ npm start
 **Optional:** [Gemini API key](https://aistudio.google.com/apikey) for the Concept Explorer  
 **Optional:** Obsidian vault path for paper exports
 
-> **Note:** SCAN requires a Node.js server (Express) for the arXiv API, full-text parser, and Gemini integration. It cannot run as a static site on GitHub Pages alone. For hosting, use [Render](https://render.com), [Railway](https://railway.app), or [Vercel](https://vercel.com) (serverless).
+> **Note:** BASIRA_ requires a Node.js server (Express) for the arXiv API, full-text parser, and Gemini integration. It cannot run as a static site on GitHub Pages alone. For hosting, use [Render](https://render.com), [Railway](https://railway.app), or [Vercel](https://vercel.com) (serverless).
 
 ### 📖 Full Documentation
 See [[00_Index]] for the complete documentation — architecture, design philosophy, AI integration, highlight system internals, bug chronicle, and configuration guide.
@@ -35,7 +35,7 @@ See [[00_Index]] for the complete documentation — architecture, design philoso
 
 ## What This Is
 
-SCAN harvests the latest research papers from arXiv, maps them into an interconnected knowledge graph, and serves the whole thing as a localhost web application. You explore papers the way you explore an Obsidian vault — by navigating connections, not by scrolling lists.
+BASIRA_ harvests the latest research papers from arXiv, maps them into an interconnected knowledge graph, and serves the whole thing as a localhost web application. You explore papers the way you explore an Obsidian vault — by navigating connections, not by scrolling lists.
 
 Papers are **nodes**. Shared keywords, authors, and arXiv categories form **edges**. The graph self-organizes by relatedness. You click into any node to read the abstract, save it for later, take notes, or export it as Obsidian-compatible Markdown.
 
@@ -45,7 +45,7 @@ The aesthetic is deliberately computational — net art particle fields, monospa
 
 ## Domains
 
-SCAN tracks five research areas. Each has a dedicated color throughout the interface.
+BASIRA_ tracks five research areas. Each has a dedicated color throughout the interface.
 
 | Domain | Color | arXiv Source | What It Covers |
 |--------|-------|-------------|----------------|
@@ -62,7 +62,7 @@ Papers that span multiple domains appear as **white nodes** and are tagged `OVER
 ## Quick Start
 
 ```bash
-cd /home/BASE/BSR/BASAIRA/01-Projects/SCAN
+cd /home/BASE/BSR/BASAIRA/01-Projects/BASIRA_
 
 # Install dependencies (first time only)
 npm install
@@ -149,7 +149,7 @@ domains: [neuroscience, cognition]
 tags: [neural, brain, cortex]
 arxiv: https://arxiv.org/abs/2603.30004v1
 pdf: https://arxiv.org/pdf/2603.30004v1
-source: SCAN
+source: BASIRA_
 ---
 ```
 
@@ -199,7 +199,7 @@ The generative background is a canvas-based particle system: ~100 particles in t
 ## Project Structure
 
 ```
-SCAN/
+BASIRA_/
 ├── docs/
 │   ├── README.md              ← You are here
 │   ├── ARCHITECTURE.md        ← System design, data flow, edge logic

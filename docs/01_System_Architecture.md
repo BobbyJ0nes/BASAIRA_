@@ -4,7 +4,7 @@
 
 ## Overview
 
-SCAN is a two-tier application: a Node.js Express server that fetches, parses, and caches research papers, and a vanilla JavaScript frontend that renders them as an interactive knowledge graph. There is no build step, no bundler, no framework — raw ES modules served as static files.
+BASIRA_ is a two-tier application: a Node.js Express server that fetches, parses, and caches research papers, and a vanilla JavaScript frontend that renders them as an interactive knowledge graph. There is no build step, no bundler, no framework — raw ES modules served as static files.
 
 The server handles three categories of work:
 1. **Data acquisition** — fetching from arXiv API, parsing XML, computing paper relationships
@@ -125,7 +125,7 @@ V1 deliberately avoids React, Vue, bundlers, TypeScript, or any build tooling. T
 1. **Speed of iteration** — Save file, refresh browser, see changes. No compile wait.
 2. **Transparency** — Every file the browser loads is the file you wrote. No source maps needed.
 3. **Minimal dependency surface** — Three npm packages (`express`, `xml2js`, `dotenv`). Nothing else.
-4. **Appropriate complexity** — SCAN is a personal research tool, not a team product. The codebase is ~6,300 LOC across 16 files. This is comfortably within vanilla JS territory.
+4. **Appropriate complexity** — BASIRA_ is a personal research tool, not a team product. The codebase is ~6,300 LOC across 16 files. This is comfortably within vanilla JS territory.
 5. **D3 works best raw** — D3's functional paradigm maps naturally to vanilla JS. Wrapping it in React creates more problems than it solves.
 
 The trade-off is explicit: no type safety, no component reuse beyond copy-paste, no hot module replacement. For a tool this size, those trade-offs are acceptable.
@@ -153,7 +153,7 @@ The server holds all paper data in memory after loading from cache. There is no 
 
 ## Two-Page SPA
 
-SCAN has exactly two HTML pages:
+BASIRA_ has exactly two HTML pages:
 
 | Page | URL | Purpose |
 |------|-----|---------|

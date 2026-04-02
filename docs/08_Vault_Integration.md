@@ -4,7 +4,7 @@
 
 ## Overview
 
-SCAN writes paper notes directly to an Obsidian vault as Markdown files. This creates a bidirectional workflow: discover papers in SCAN's graph → read and annotate → export to vault → connect with other knowledge in Obsidian.
+BASIRA_ writes paper notes directly to an Obsidian vault as Markdown files. This creates a bidirectional workflow: discover papers in BASIRA_'s graph → read and annotate → export to vault → connect with other knowledge in Obsidian.
 
 The integration was modelled after the [[../../01-Projects/ANIMUS/README|ANIMUS]] journal project's vault-write pattern.
 
@@ -53,7 +53,7 @@ domains: [neuroscience, cognition]
 tags: [keyword1, keyword2, keyword3]
 arxiv: https://arxiv.org/abs/2603.30004v1
 pdf: https://arxiv.org/pdf/2603.30004v1
-source: SCAN
+source: BASIRA_
 saved: 2026-04-02
 ---
 
@@ -101,7 +101,7 @@ User's freeform notes here.
 #keyword1 #keyword2 #keyword3 #scan
 
 ---
-*Saved from SCAN — 2 April 2026*
+*Saved from BASIRA_ — 2 April 2026*
 ```
 
 ---
@@ -133,10 +133,10 @@ The exported Markdown is designed to work well in Obsidian:
 - **YAML frontmatter** — Obsidian reads this for search, Dataview queries, and graph view
 - **Hashtags** — `#keyword #scan` at the bottom, clickable in Obsidian
 - **Wikilinks** — Not generated in V1, but the tags and domain names make papers discoverable via Obsidian's search and tag panes
-- **Folder structure** — All SCAN exports go to a single subfolder, keeping them organised
+- **Folder structure** — All BASIRA_ exports go to a single subfolder, keeping them organised
 
 ### Dataview Query Example
-In Obsidian, you could query all SCAN papers in a specific domain:
+In Obsidian, you could query all BASIRA_ papers in a specific domain:
 ```dataview
 TABLE authors, published, domains
 FROM "98 - Journal/scan"

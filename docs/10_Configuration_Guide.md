@@ -21,14 +21,14 @@ VAULT_SCAN_FOLDER=scan
 3. Generate an API key
 4. Copy to `.env`
 
-The free tier is sufficient for SCAN's usage. See [[03_AI_Integration#Cost and Rate Considerations]].
+The free tier is sufficient for BASIRA_'s usage. See [[03_AI_Integration#Cost and Rate Considerations]].
 
 ### Vault Path
 Set `VAULT_PATH` to the **root** of your Obsidian vault. `VAULT_SCAN_FOLDER` is the subfolder within it. Example:
 ```
 VAULT_PATH=/Users/you/Documents/MyVault
-VAULT_SCAN_FOLDER=Research/SCAN
-→ Files saved to: /Users/you/Documents/MyVault/Research/SCAN/
+VAULT_SCAN_FOLDER=Research/BASIRA_
+→ Files saved to: /Users/you/Documents/MyVault/Research/BASIRA_/
 ```
 
 ---
@@ -89,7 +89,7 @@ domainKey: {
 ### arXiv Category Reference
 Full list: [arxiv.org/category_taxonomy](https://arxiv.org/category_taxonomy)
 
-Common categories used in SCAN:
+Common categories used in BASIRA_:
 - `q-bio.NC` — Quantitative Biology: Neurons and Cognition
 - `cs.AI` — Computer Science: Artificial Intelligence
 - `cs.LG` — Computer Science: Machine Learning
@@ -147,7 +147,7 @@ npm start             # → http://localhost:3000
 Requires refactoring — Express needs to be split into serverless functions. Not recommended for V1 unless persistence layer is also migrated. See [[01_System_Architecture#Why No Build Step]] for context.
 
 ### GitHub Pages
-**Not supported.** SCAN requires a Node.js server for the API layer (arXiv fetching, Gemini integration, vault writing). GitHub Pages only serves static files.
+**Not supported.** BASIRA_ requires a Node.js server for the API layer (arXiv fetching, Gemini integration, vault writing). GitHub Pages only serves static files.
 
 ---
 

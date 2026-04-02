@@ -1,7 +1,7 @@
 {
-  "name": "scan",
+  "name": "basira",
   "version": "1.0.0",
-  "description": "Systematic Curation & Analysis Network — Research paper discovery engine",
+  "description": "BASIRA_ — Research paper discovery engine",
   "main": "src/server/index.js",
   "type": "module",
   "scripts": {

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-// SCAN — Main Application Controller
+// BASIRA_ — Main Application Controller
 // ═══════════════════════════════════════════════════════════
 //
 // Orchestrates the entire frontend. On DOMContentLoaded:

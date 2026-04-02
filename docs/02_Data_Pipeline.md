@@ -4,7 +4,7 @@
 
 ## Overview
 
-SCAN's data pipeline has four stages: **fetch → parse → compute → cache**. Papers are harvested from the arXiv API, parsed from XML into structured objects, connected through edge computation, and cached to disk. A separate pipeline handles **full-text extraction** from arXiv's HTML rendering service for the reader view.
+BASIRA_'s data pipeline has four stages: **fetch → parse → compute → cache**. Papers are harvested from the arXiv API, parsed from XML into structured objects, connected through edge computation, and cached to disk. A separate pipeline handles **full-text extraction** from arXiv's HTML rendering service for the reader view.
 
 ---
 
@@ -14,7 +14,7 @@ SCAN's data pipeline has four stages: **fetch → parse → compute → cache**.
 - **Endpoint**: `https://export.arxiv.org/api/query`
 - **Protocol**: Must use HTTPS (HTTP returns 301)
 - **Rate limiting**: 3.5 second delay between requests (`ARXIV_DELAY_MS` in config)
-- **User-Agent**: `SCAN/1.0 (research-tool; mailto:scan@research)`
+- **User-Agent**: `BASIRA_/1.0 (research-tool; mailto:scan@research)`
 
 ### Query Strategy
 Each domain in `scan.config.js` defines one or more arXiv query strings:

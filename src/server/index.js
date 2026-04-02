@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-// SCAN Server — Entry Point
+// BASIRA_ Server — Entry Point
 // ═══════════════════════════════════════════════════════════
 //
 // Express server that:
@@ -52,25 +52,25 @@ process.on('SIGPIPE', () => {});
 
 async function start() {
   console.log('');
-  console.log('  ███████╗ ██████╗ █████╗ ███╗   ██╗');
-  console.log('  ██╔════╝██╔════╝██╔══██╗████╗  ██║');
-  console.log('  ███████╗██║     ███████║██╔██╗ ██║');
-  console.log('  ╚════██║██║     ██╔══██║██║╚██╗██║');
-  console.log('  ███████║╚██████╗██║  ██║██║ ╚████║');
-  console.log('  ╚══════╝ ╚═════╝╚═╝  ╚═╝╚═╝  ╚═══╝');
+  console.log('  ██████╗  █████╗ ███████╗██╗██████╗  █████╗');
+  console.log('  ██╔══██╗██╔══██╗██╔════╝██║██╔══██╗██╔══██╗');
+  console.log('  ██████╔╝███████║███████╗██║██████╔╝███████║');
+  console.log('  ██╔══██╗██╔══██║╚════██║██║██╔══██╗██╔══██║');
+  console.log('  ██████╔╝██║  ██║███████║██║██║  ██║██║  ██║');
+  console.log('  ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝╚═╝  ╚═╝╚═╝  ╚═╝');
   console.log('');
-  console.log('  Systematic Curation & Analysis Network');
-  console.log('  ─────────────────────────────────────');
+  console.log('  Research Discovery Engine');
+  console.log('  ─────────────────────────');
   console.log('');
 
   await initData();
 
   app.listen(SERVER_PORT, () => {
-    console.log(`\n  ▸ SCAN running at http://localhost:${SERVER_PORT}\n`);
+    console.log(`\n  ▸ BASIRA_ running at http://localhost:${SERVER_PORT}\n`);
   });
 }
 
 start().catch(err => {
-  console.error('Failed to start SCAN:', err);
+  console.error('Failed to start BASIRA_:', err);
   process.exit(1);
 });

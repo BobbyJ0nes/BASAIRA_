@@ -4,7 +4,7 @@
 
 ## Overview
 
-The reader (`reader.html` + `reader.js`) is a dedicated view for reading, annotating, and exploring a single paper. It fetches the full text from arXiv's HTML rendering service and displays it in a purpose-built reading environment — not a PDF viewer, not an iframe, but native HTML styled to match SCAN's aesthetic.
+The reader (`reader.html` + `reader.js`) is a dedicated view for reading, annotating, and exploring a single paper. It fetches the full text from arXiv's HTML rendering service and displays it in a purpose-built reading environment — not a PDF viewer, not an iframe, but native HTML styled to match BASIRA_'s aesthetic.
 
 ---
 
@@ -12,7 +12,7 @@ The reader (`reader.html` + `reader.js`) is a dedicated view for reading, annota
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  ← SCAN                              ☆  ⤓ VAULT  PDF  arXiv │  ← header (sticky)
+│  ← BASIRA_                              ☆  ⤓ VAULT  PDF  arXiv │  ← header (sticky)
 ├──┬──────────────────────────────────────────┬───────────────┤
 │  │                                          │ ANNOTATIONS   │
 │ 1│  [Domain Tags]  [OVERLAP]                │ "quoted text" │

@@ -1,10 +1,10 @@
-# SCAN — Documentation Index
+# BASIRA_ — Documentation Index
 
 > *Systematic Curation & Analysis Network*
 > *A research paper discovery engine rendered as a living knowledge graph.*
 > *V1 · April 2026*
 
-SCAN harvests recent research papers from arXiv across five interdisciplinary domains, maps them into a force-directed knowledge graph, and provides an in-app reading experience with AI-powered concept exploration. The aesthetic is deliberately computational — net art particle fields, neon domain colours, terminal typography on near-black. A practical research tool wrapped in generative visual texture.
+BASIRA_ harvests recent research papers from arXiv across five interdisciplinary domains, maps them into a force-directed knowledge graph, and provides an in-app reading experience with AI-powered concept exploration. The aesthetic is deliberately computational — net art particle fields, neon domain colours, terminal typography on near-black. A practical research tool wrapped in generative visual texture.
 
 ---
 
@@ -33,7 +33,7 @@ SCAN harvests recent research papers from arXiv across five interdisciplinary do
 ## Quick Orientation
 
 ```
-SCAN/
+BASIRA_/
 ├── docs/                  ← you are here
 ├── src/
 │   ├── client/

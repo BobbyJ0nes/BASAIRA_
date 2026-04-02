@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════════════════
-// SCAN Configuration
+// BASIRA_ Configuration
 // ═══════════════════════════════════════════════════════════
 //
-// Central configuration for all SCAN domains, server settings,
+// Central configuration for all BASIRA_ domains, server settings,
 // and arXiv API parameters.
 //
 // To add a new research domain:
