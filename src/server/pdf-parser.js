@@ -79,36 +79,15 @@ async function deleteFromGemini(fileName) {
   } catch (e) { /* ignore cleanup errors */ }
 }
 
-// Extract structured content from the uploaded PDF
-async function extractFromPDF(fileUri) {
-  const prompt = `You are extracting the full structured content of an academic research paper from a PDF.
-
-Return a JSON object with:
-1. "title": the paper's title
-2. "authors": array of author names
-3. "abstract": the full abstract text
-4. "keywords": array of 10-20 key research concepts/topics from this paper (lowercase, 1-3 words each). These should be specific research concepts, not generic words. E.g., "reinforcement learning", "feedback control", "neural plasticity", "embodied cognition"
-5. "sections": array of ALL sections, each with:
-   - "id": section identifier (e.g., "S1", "S2", "S2.SS1")
-   - "title": section heading (e.g., "1 Introduction", "2.1 Data Collection")
-   - "content": the FULL text content of that section (every paragraph, complete)
-   - "isSubsection": true if it's a subsection (e.g., 2.1, 3.2)
-
-IMPORTANT:
-- Include ALL text from every section — do not summarize or truncate
-- Preserve mathematical notation in LaTeX format (e.g., $w_{ij}$, $\\alpha$)
-- Do not include references/bibliography section
-- Return ONLY valid JSON, no markdown fences
-
-The sections array should capture the complete paper text.`;
-
+// Call Gemini with a file and prompt
+async function callGeminiWithFile(fileUri, prompt, maxTokens = 4096) {
   const body = JSON.stringify({
     contents: [{ parts: [
       { fileData: { mimeType: 'application/pdf', fileUri } },
       { text: prompt }
     ]}],
     generationConfig: {
-      maxOutputTokens: 32768,
+      maxOutputTokens: maxTokens,
       temperature: 0.1,
       thinkingConfig: { thinkingBudget: 0 }
     }
@@ -125,8 +104,32 @@ The sections array should capture the complete paper text.`;
   const json = JSON.parse(res.body);
   const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!text) throw new Error('No response from Gemini: ' + res.body.slice(0, 200));
-
   return text;
+}
+
+// Step 1: Extract metadata (fast, reliable)
+async function extractMetadata(fileUri) {
+  const prompt = `Extract this academic paper's metadata. Return JSON only, no fences:
+{"title": "paper title", "authors": ["name1", "name2"], "abstract": "full abstract text", "keywords": ["concept1", "concept2", ...]}
+
+For keywords: extract 10-20 specific research concepts (lowercase, 1-3 words each) like "reinforcement learning", "feedback control", "embodied cognition". Not generic words.`;
+
+  return callGeminiWithFile(fileUri, prompt, 2048);
+}
+
+// Step 2: Extract sections (longer, may need more tokens)
+async function extractSections(fileUri) {
+  const prompt = `Extract ALL sections from this academic paper. Return a JSON array of sections, no fences:
+[{"id": "S1", "title": "1 Introduction", "content": "full section text here...", "isSubsection": false}, ...]
+
+Rules:
+- Include EVERY section with its FULL text content
+- Use ids like S1, S2, S2.SS1 for subsections
+- Preserve math as LaTeX (e.g., $w_{ij}$)
+- Skip references/bibliography
+- Return ONLY the JSON array`;
+
+  return callGeminiWithFile(fileUri, prompt, 32768);
 }
 
 // Robust JSON parser
@@ -180,48 +183,55 @@ export async function parsePDF(pdfPath) {
   const file = await uploadToGemini(pdfBuffer, filename);
 
   try {
-    // Extract structure
-    console.log(`    → Extracting structure via Gemini...`);
-    const rawResponse = await extractFromPDF(file.uri);
-    const result = parseJSON(rawResponse);
+    // Step 1: Extract metadata (fast — title, authors, abstract, keywords)
+    console.log(`    → Extracting metadata...`);
+    const metaRaw = await extractMetadata(file.uri);
+    const meta = parseJSON(metaRaw);
+    console.log(`    ✓ Metadata: "${meta.title}" by ${(meta.authors || []).length} authors, ${(meta.keywords || []).length} keywords`);
 
-    console.log(`    ✓ Extracted: "${result.title}" — ${result.sections?.length || 0} sections`);
-
-    // Normalise into the same shape as paper-parser
-    const sections = (result.sections || []).map((s, i) => ({
-      id: s.id || `S${i + 1}`,
-      title: s.title || `Section ${i + 1}`,
-      paragraphs: (s.content || '').split(/\n\n+/).map(p => p.trim()).filter(p => p.length > 10),
-      isSubsection: s.isSubsection || false,
-    }));
+    // Step 2: Extract sections (slower — full text)
+    console.log(`    → Extracting sections...`);
+    let sections = [];
+    try {
+      const sectionsRaw = await extractSections(file.uri);
+      const parsed = parseJSON(sectionsRaw);
+      sections = (Array.isArray(parsed) ? parsed : parsed.sections || []).map((s, i) => ({
+        id: s.id || `S${i + 1}`,
+        title: s.title || `Section ${i + 1}`,
+        paragraphs: (s.content || '').split(/\n\n+/).map(p => p.trim()).filter(p => p.length > 10),
+        isSubsection: s.isSubsection || false,
+      }));
+    } catch (sErr) {
+      console.log(`    ⚠ Section extraction failed (${sErr.message}), using abstract only`);
+    }
 
     // Add abstract as first section if not already there
-    if (result.abstract && (!sections[0] || sections[0].title.toLowerCase() !== 'abstract')) {
+    if (meta.abstract && (!sections[0] || sections[0].title.toLowerCase() !== 'abstract')) {
       sections.unshift({
         id: 'abstract',
         title: 'Abstract',
-        paragraphs: result.abstract.split(/\n\n+/).map(p => p.trim()).filter(p => p.length > 10),
+        paragraphs: meta.abstract.split(/\n\n+/).map(p => p.trim()).filter(p => p.length > 10),
       });
     }
 
+    console.log(`    ✓ Total: ${sections.length} sections`);
+
     // Use Gemini-extracted keywords first, supplement with title extraction
-    let tags = result.keywords || [];
+    let tags = meta.keywords || [];
     if (tags.length < 5) {
-      tags = [...tags, ...extractTags(result.title || '', result.abstract || '')];
+      tags = [...tags, ...extractTags(meta.title || '', meta.abstract || '')];
     }
-    // Deduplicate
     tags = [...new Set(tags.map(t => t.toLowerCase()))].slice(0, 20);
 
     return {
-      title: result.title || filename,
-      authors: result.authors || [],
-      abstract: result.abstract || '',
+      title: meta.title || filename,
+      authors: meta.authors || [],
+      abstract: meta.abstract || '',
       sections,
       tags,
       source: 'pdf',
     };
   } finally {
-    // Clean up uploaded file
     await deleteFromGemini(file.name);
   }
 }
