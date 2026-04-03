@@ -25,7 +25,7 @@ function httpsRequest(options, body) {
       res.on('end', () => resolve({ headers: res.headers, statusCode: res.statusCode, body: data }));
     });
     req.on('error', reject);
-    req.setTimeout(60000, () => { req.destroy(); reject(new Error('Request timeout')); });
+    req.setTimeout(120000, () => { req.destroy(); reject(new Error('Request timeout')); });
     if (body) req.write(body);
     req.end();
   });
@@ -87,7 +87,8 @@ Return a JSON object with:
 1. "title": the paper's title
 2. "authors": array of author names
 3. "abstract": the full abstract text
-4. "sections": array of ALL sections, each with:
+4. "keywords": array of 10-20 key research concepts/topics from this paper (lowercase, 1-3 words each). These should be specific research concepts, not generic words. E.g., "reinforcement learning", "feedback control", "neural plasticity", "embodied cognition"
+5. "sections": array of ALL sections, each with:
    - "id": section identifier (e.g., "S1", "S2", "S2.SS1")
    - "title": section heading (e.g., "1 Introduction", "2.1 Data Collection")
    - "content": the FULL text content of that section (every paragraph, complete)
@@ -107,7 +108,7 @@ The sections array should capture the complete paper text.`;
       { text: prompt }
     ]}],
     generationConfig: {
-      maxOutputTokens: 65536,
+      maxOutputTokens: 32768,
       temperature: 0.1,
       thinkingConfig: { thinkingBudget: 0 }
     }
@@ -203,7 +204,13 @@ export async function parsePDF(pdfPath) {
       });
     }
 
-    const tags = extractTags(result.title || '', result.abstract || '');
+    // Use Gemini-extracted keywords first, supplement with title extraction
+    let tags = result.keywords || [];
+    if (tags.length < 5) {
+      tags = [...tags, ...extractTags(result.title || '', result.abstract || '')];
+    }
+    // Deduplicate
+    tags = [...new Set(tags.map(t => t.toLowerCase()))].slice(0, 20);
 
     return {
       title: result.title || filename,

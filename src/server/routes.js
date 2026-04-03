@@ -249,13 +249,13 @@ function guessDomains(title, abstract, tags) {
     neuroscience: ['neural', 'brain', 'cortex', 'neuron', 'eeg', 'fmri', 'synapse', 'hippocampus', 'neuroplasticity', 'dopamine', 'serotonin'],
     ai: ['machine learning', 'deep learning', 'transformer', 'llm', 'reinforcement learning', 'neural network', 'generative', 'gpt', 'diffusion', 'agent'],
     cybernetics: ['control', 'feedback', 'dynamical system', 'stability', 'adaptive', 'self-organizing', 'homeostasis', 'regulation', 'observer'],
-    cognition: ['cognition', 'cognitive', 'perception', 'attention', 'memory', 'decision making', 'consciousness', 'metacognition', 'embodied'],
+    cognition: ['cognition', 'cognitive', 'perception', 'attention', 'memory', 'decision making', 'consciousness', 'metacognition', 'embodied', 'human-computer', 'hci', 'interaction', 'user', 'affective', 'emotion', 'social', 'conversational', 'interface', 'usability'],
     biomimetics: ['bio-inspired', 'swarm', 'evolutionary', 'genetic algorithm', 'artificial life', 'cellular automata', 'morphogenesis', 'emergence'],
   };
 
   for (const [domain, keywords] of Object.entries(DOMAIN_KEYWORDS)) {
     const matches = keywords.filter(k => text.includes(k)).length;
-    if (matches >= 2) domains.push(domain);
+    if (matches >= 1) domains.push(domain);
   }
 
   // Default to AI if nothing matches
@@ -270,6 +270,7 @@ function computeEdgesForPaper(newPaper, allPapers) {
   const newTags = new Set(newPaper.tags);
   const newAuthors = new Set(newPaper.authors.map(a => a.toLowerCase()));
   const newDomains = new Set(newPaper.domains);
+  const newText = (newPaper.title + ' ' + newPaper.abstract).toLowerCase();
 
   for (const other of allPapers) {
     if (other.id === newPaper.id) continue;
@@ -278,23 +279,48 @@ function computeEdgesForPaper(newPaper, allPapers) {
     const otherAuthors = new Set((other.authors || []).map(a => a.toLowerCase()));
     const otherDomains = new Set(other.domains);
 
+    // Exact tag matches
     const sharedTags = [...newTags].filter(t => otherTags.has(t));
+
+    // Fuzzy tag matches (one tag is a substring of the other)
+    let fuzzyMatches = 0;
+    for (const nt of newTags) {
+      for (const ot of otherTags) {
+        if (nt !== ot && nt.length > 3 && ot.length > 3) {
+          if (nt.includes(ot) || ot.includes(nt)) fuzzyMatches++;
+        }
+      }
+    }
+
+    // Abstract word overlap (simple cosine-like)
+    const otherText = (other.title + ' ' + (other.abstract || '')).toLowerCase();
+    const newWords = new Set(newText.match(/\b[a-z]{4,}\b/g) || []);
+    const otherWords = new Set(otherText.match(/\b[a-z]{4,}\b/g) || []);
+    const commonWords = [...newWords].filter(w => otherWords.has(w)).length;
+    const abstractSim = commonWords / Math.max(1, Math.sqrt(newWords.size * otherWords.size));
+
     const sharedAuthors = [...newAuthors].filter(a => otherAuthors.has(a));
     const sharedDomains = [...newDomains].filter(d => otherDomains.has(d));
 
-    const score = (sharedTags.length * 0.5) + (sharedAuthors.length * 3.0) + (sharedDomains.length * 0.3);
+    const score = (sharedTags.length * 0.5)
+      + (fuzzyMatches * 0.3)
+      + (sharedAuthors.length * 3.0)
+      + (sharedDomains.length * 0.3)
+      + (abstractSim * 8.0); // Abstract similarity is a strong signal
 
-    if (score >= 1.5) {
+    if (score >= 1.2) {
       edges.push({
         source: newPaper.id,
         target: other.id,
-        weight: score,
-        sharedTags,
+        weight: Math.round(score * 10) / 10,
+        sharedTags: sharedTags.length > 0 ? sharedTags : [`~${commonWords} common terms`],
       });
     }
   }
 
-  return edges;
+  // Cap at top 20 edges per paper
+  edges.sort((a, b) => b.weight - a.weight);
+  return edges.slice(0, 20);
 }
 
 // Save cache to disk
