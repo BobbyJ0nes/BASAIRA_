@@ -192,17 +192,22 @@ export async function parsePDF(pdfPath) {
     // Step 2: Extract sections (slower — full text)
     console.log(`    → Extracting sections...`);
     let sections = [];
-    try {
-      const sectionsRaw = await extractSections(file.uri);
-      const parsed = parseJSON(sectionsRaw);
-      sections = (Array.isArray(parsed) ? parsed : parsed.sections || []).map((s, i) => ({
-        id: s.id || `S${i + 1}`,
-        title: s.title || `Section ${i + 1}`,
-        paragraphs: (s.content || '').split(/\n\n+/).map(p => p.trim()).filter(p => p.length > 10),
-        isSubsection: s.isSubsection || false,
-      }));
-    } catch (sErr) {
-      console.log(`    ⚠ Section extraction failed (${sErr.message}), using abstract only`);
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        console.log(`    → Extracting sections (attempt ${attempt})...`);
+        const sectionsRaw = await extractSections(file.uri);
+        const parsed = parseJSON(sectionsRaw);
+        sections = (Array.isArray(parsed) ? parsed : parsed.sections || []).map((s, i) => ({
+          id: s.id || `S${i + 1}`,
+          title: s.title || `Section ${i + 1}`,
+          paragraphs: (s.content || '').split(/\n\n+/).map(p => p.trim()).filter(p => p.length > 10),
+          isSubsection: s.isSubsection || false,
+        }));
+        if (sections.length > 0) break;
+      } catch (sErr) {
+        console.log(`    ⚠ Section extraction attempt ${attempt} failed: ${sErr.message}`);
+        if (attempt === 2) console.log(`    ⚠ Using abstract only`);
+      }
     }
 
     // Add abstract as first section if not already there

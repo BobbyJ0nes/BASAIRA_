@@ -73,11 +73,11 @@ function renderPaper() {
   document.getElementById('reader-title').textContent = p.title;
 
   // Meta
-  document.getElementById('reader-meta').innerHTML = `
-    📅 ${new Date(p.published).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
-    · <a href="${p.arxivUrl}" target="_blank">arXiv:${p.id}</a>
-    · ${p.categories.join(' · ')}
-  `;
+  const dateStr = new Date(p.published).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  const sourceLink = p.arxivUrl
+    ? `<a href="${p.arxivUrl}" target="_blank">arXiv:${p.id}</a>`
+    : `<span style="color:var(--cognition)">PDF upload</span>`;
+  document.getElementById('reader-meta').innerHTML = `📅 ${dateStr} · ${sourceLink} · ${p.categories.join(' · ')}`;
 
   // Authors
   document.getElementById('reader-authors').textContent = p.authors.join(', ');
@@ -200,8 +200,23 @@ function renderPaper() {
 
   // Header buttons
   document.getElementById('reader-save').textContent = Store.isReadLater(p.id) ? '★' : '☆';
-  document.getElementById('reader-pdf').onclick = () => window.open(p.pdfUrl, '_blank');
-  document.getElementById('reader-arxiv').onclick = () => window.open(p.arxivUrl, '_blank');
+  // PDF button — always works if pdfUrl exists
+  const pdfBtn = document.getElementById('reader-pdf');
+  if (p.pdfUrl) {
+    pdfBtn.style.display = '';
+    pdfBtn.onclick = () => window.open(p.pdfUrl, '_blank');
+  } else {
+    pdfBtn.style.display = 'none';
+  }
+
+  // arXiv button — only for arXiv papers
+  const arxivBtn = document.getElementById('reader-arxiv');
+  if (p.arxivUrl) {
+    arxivBtn.style.display = '';
+    arxivBtn.onclick = () => window.open(p.arxivUrl, '_blank');
+  } else {
+    arxivBtn.style.display = 'none';
+  }
 }
 
 // ─── HIGHLIGHT SYSTEM ───

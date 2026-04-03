@@ -10,6 +10,7 @@ node_modules/
 
 # Cached data
 src/data/papers-cache.json
+src/data/pdfs/
 
 # Logs
 *.log

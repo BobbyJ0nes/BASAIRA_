@@ -188,7 +188,7 @@ router.post('/papers/upload', upload.single('pdf'), async (req, res) => {
       tags: result.tags,
       isOverlap: false,
       arxivUrl: '',
-      pdfUrl: '',
+      pdfUrl: `/api/papers/${paperId}/pdf`,
     };
 
     // Check for overlap domains
@@ -217,8 +217,11 @@ router.post('/papers/upload', upload.single('pdf'), async (req, res) => {
 
     console.log(`    ✓ Added: "${paper.title}" (${paper.domains.join(', ')}) — ${newEdges.length} new edges`);
 
-    // Clean up uploaded file
-    fs.unlinkSync(req.file.path);
+    // Move PDF to permanent storage
+    const pdfDir = path.resolve('src/data/pdfs');
+    if (!fs.existsSync(pdfDir)) fs.mkdirSync(pdfDir, { recursive: true });
+    const pdfDest = path.join(pdfDir, paperId + '.pdf');
+    fs.renameSync(req.file.path, pdfDest);
 
     res.json({
       success: true,
@@ -332,6 +335,18 @@ function saveCache() {
     console.error('  ✗ Cache save failed:', e.message);
   }
 }
+
+// GET /api/papers/:id/pdf — serve the stored PDF file
+router.get('/papers/:id/pdf', (req, res) => {
+  const pdfPath = path.resolve('src/data/pdfs', req.params.id + '.pdf');
+  if (fs.existsSync(pdfPath)) {
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline');
+    fs.createReadStream(pdfPath).pipe(res);
+  } else {
+    res.status(404).json({ error: 'PDF not found' });
+  }
+});
 
 // GET /api/stats — overview
 router.get('/stats', (req, res) => {
