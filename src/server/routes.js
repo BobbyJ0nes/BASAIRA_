@@ -25,10 +25,13 @@
 import { Router } from 'express';
 import fs from 'fs';
 import path from 'path';
+import multer from 'multer';
 import { fetchAllPapers } from './arxiv.js';
+import { parsePDF } from './pdf-parser.js';
 import { conceptualSearch } from './search.js';
 import { fetchFullPaper } from './paper-parser.js';
 import { extractConcepts, extractSectionConcepts, findConceptPassages } from './concepts.js';
+import { buildConceptGraph } from './concept-graph.js';
 import { CACHE_FILE, CACHE_MAX_AGE_HOURS, DOMAINS } from '../../scan.config.js';
 
 // In-memory cache for fetched full-text papers (avoid re-fetching)
@@ -139,6 +142,170 @@ router.get('/tags', (req, res) => {
     .map(([tag, count]) => ({ tag, count }));
   res.json(sorted);
 });
+
+// GET /api/concept-graph — concept-level knowledge graph
+router.get('/concept-graph', (req, res) => {
+  const minPapers = parseInt(req.query.min) || 3;
+  const result = buildConceptGraph(graphData.papers, minPapers, 2);
+  res.json(result);
+});
+
+// ═══════════════════════════════════════════════════════════
+// PDF UPLOAD — Add papers from PDF files
+// ═══════════════════════════════════════════════════════════
+
+const upload = multer({
+  dest: '/tmp/basira-uploads/',
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB max
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/pdf') cb(null, true);
+    else cb(new Error('Only PDF files accepted'));
+  }
+});
+
+// POST /api/papers/upload — upload a PDF, parse it, add to graph
+router.post('/papers/upload', upload.single('pdf'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No PDF file uploaded' });
+
+  try {
+    console.log(`\n  📄 PDF upload: ${req.file.originalname} (${Math.round(req.file.size / 1024)}KB)`);
+
+    // Parse PDF via Gemini
+    const result = await parsePDF(req.file.path);
+
+    // Generate a unique ID
+    const paperId = 'pdf-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+    // Create paper object matching the arXiv schema
+    const paper = {
+      id: paperId,
+      title: result.title,
+      authors: result.authors,
+      abstract: result.abstract,
+      published: new Date().toISOString(),
+      categories: ['pdf-upload'],
+      domains: guessDomains(result.title, result.abstract, result.tags),
+      tags: result.tags,
+      isOverlap: false,
+      arxivUrl: '',
+      pdfUrl: '',
+    };
+
+    // Check for overlap domains
+    if (paper.domains.length > 1) paper.isOverlap = true;
+
+    // Add to graph data
+    graphData.papers.push(paper);
+
+    // Compute edges against existing papers
+    const newEdges = computeEdgesForPaper(paper, graphData.papers);
+    graphData.edges.push(...newEdges);
+
+    // Cache the full content
+    fullTextCache.set(paperId, {
+      sections: result.sections.map(s => ({
+        id: s.id,
+        title: s.title,
+        content: s.paragraphs.join('\n\n'),
+        isSubsection: s.isSubsection || false,
+      })),
+      source: 'pdf',
+    });
+
+    // Save updated cache
+    saveCache();
+
+    console.log(`    ✓ Added: "${paper.title}" (${paper.domains.join(', ')}) — ${newEdges.length} new edges`);
+
+    // Clean up uploaded file
+    fs.unlinkSync(req.file.path);
+
+    res.json({
+      success: true,
+      paper: {
+        id: paper.id,
+        title: paper.title,
+        authors: paper.authors,
+        domains: paper.domains,
+        tags: paper.tags,
+        edgesAdded: newEdges.length,
+        sections: result.sections.length,
+      }
+    });
+  } catch (err) {
+    console.error('  ✗ PDF upload failed:', err.message);
+    // Clean up
+    if (req.file?.path) try { fs.unlinkSync(req.file.path); } catch (e) {}
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Guess domains from content (for non-arXiv papers)
+function guessDomains(title, abstract, tags) {
+  const text = (title + ' ' + abstract + ' ' + tags.join(' ')).toLowerCase();
+  const domains = [];
+
+  const DOMAIN_KEYWORDS = {
+    neuroscience: ['neural', 'brain', 'cortex', 'neuron', 'eeg', 'fmri', 'synapse', 'hippocampus', 'neuroplasticity', 'dopamine', 'serotonin'],
+    ai: ['machine learning', 'deep learning', 'transformer', 'llm', 'reinforcement learning', 'neural network', 'generative', 'gpt', 'diffusion', 'agent'],
+    cybernetics: ['control', 'feedback', 'dynamical system', 'stability', 'adaptive', 'self-organizing', 'homeostasis', 'regulation', 'observer'],
+    cognition: ['cognition', 'cognitive', 'perception', 'attention', 'memory', 'decision making', 'consciousness', 'metacognition', 'embodied'],
+    biomimetics: ['bio-inspired', 'swarm', 'evolutionary', 'genetic algorithm', 'artificial life', 'cellular automata', 'morphogenesis', 'emergence'],
+  };
+
+  for (const [domain, keywords] of Object.entries(DOMAIN_KEYWORDS)) {
+    const matches = keywords.filter(k => text.includes(k)).length;
+    if (matches >= 2) domains.push(domain);
+  }
+
+  // Default to AI if nothing matches
+  if (domains.length === 0) domains.push('ai');
+
+  return domains;
+}
+
+// Compute edges between a new paper and all existing papers
+function computeEdgesForPaper(newPaper, allPapers) {
+  const edges = [];
+  const newTags = new Set(newPaper.tags);
+  const newAuthors = new Set(newPaper.authors.map(a => a.toLowerCase()));
+  const newDomains = new Set(newPaper.domains);
+
+  for (const other of allPapers) {
+    if (other.id === newPaper.id) continue;
+
+    const otherTags = new Set(other.tags);
+    const otherAuthors = new Set((other.authors || []).map(a => a.toLowerCase()));
+    const otherDomains = new Set(other.domains);
+
+    const sharedTags = [...newTags].filter(t => otherTags.has(t));
+    const sharedAuthors = [...newAuthors].filter(a => otherAuthors.has(a));
+    const sharedDomains = [...newDomains].filter(d => otherDomains.has(d));
+
+    const score = (sharedTags.length * 0.5) + (sharedAuthors.length * 3.0) + (sharedDomains.length * 0.3);
+
+    if (score >= 1.5) {
+      edges.push({
+        source: newPaper.id,
+        target: other.id,
+        weight: score,
+        sharedTags,
+      });
+    }
+  }
+
+  return edges;
+}
+
+// Save cache to disk
+function saveCache() {
+  try {
+    const cacheData = JSON.stringify({ papers: graphData.papers, edges: graphData.edges });
+    fs.writeFileSync(path.resolve(CACHE_FILE), cacheData, 'utf-8');
+  } catch (e) {
+    console.error('  ✗ Cache save failed:', e.message);
+  }
+}
 
 // GET /api/stats — overview
 router.get('/stats', (req, res) => {

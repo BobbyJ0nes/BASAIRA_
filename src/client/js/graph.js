@@ -433,6 +433,157 @@ const GraphEngine = {
     return { minX, minY, maxX, maxY };
   },
 
+  // ═══════════════════════════════════════════════════════
+  // CONCEPT GRAPH MODE
+  // ═══════════════════════════════════════════════════════
+
+  graphMode: 'papers', // 'papers' or 'concepts'
+
+  setConceptData(conceptData) {
+    this.graphMode = 'concepts';
+
+    this.nodes = conceptData.nodes.map(n => ({
+      id: n.id,
+      label: n.label,
+      type: 'concept',
+      paperCount: n.paperCount,
+      papers: n.papers,
+      primaryDomain: n.primaryDomain,
+      domains: n.domains,
+      isMultiDomain: n.isMultiDomain,
+      r: Math.max(4, Math.min(12, 3 + n.paperCount * 0.5)),
+    }));
+
+    const nodeIds = new Set(this.nodes.map(n => n.id));
+    this.links = conceptData.edges
+      .filter(e => nodeIds.has(e.source) && nodeIds.has(e.target))
+      .map(e => ({ source: e.source, target: e.target, weight: e.weight, sharedPapers: e.sharedPapers }));
+
+    this._renderConceptGraph();
+  },
+
+  _renderConceptGraph() {
+    const linksGroup = this.container.select('.links-group');
+    const nodesGroup = this.container.select('.nodes-group');
+
+    linksGroup.selectAll('*').remove();
+    nodesGroup.selectAll('*').remove();
+
+    // Links — thicker for concept connections
+    this.linkElements = linksGroup.selectAll('line')
+      .data(this.links)
+      .join('line')
+      .attr('class', 'graph-link')
+      .attr('stroke', 'rgba(255, 255, 255, 0.08)')
+      .attr('stroke-width', d => Math.max(0.5, d.weight * 0.6))
+      .attr('stroke-opacity', d => Math.min(0.4, 0.05 + d.weight * 0.06));
+
+    // Node groups
+    const nodeGroups = nodesGroup.selectAll('g')
+      .data(this.nodes)
+      .join('g')
+      .attr('class', 'node-group concept-node')
+      .call(d3.drag()
+        .on('start', (event, d) => this._dragStart(event, d))
+        .on('drag', (event, d) => this._drag(event, d))
+        .on('end', (event, d) => this._dragEnd(event, d))
+      );
+
+    // Main circle — clean, same style as paper nodes
+    nodeGroups.append('circle')
+      .attr('class', 'node-circle')
+      .attr('r', d => d.r)
+      .attr('fill', d => DOMAIN_COLORS[d.primaryDomain] || '#888')
+      .attr('stroke', d => DOMAIN_COLORS[d.primaryDomain] || '#888')
+      .attr('stroke-opacity', 0.6)
+      .attr('fill-opacity', 0.7);
+
+    // Concept label — subtle, neutral colour
+    nodeGroups.append('text')
+      .attr('class', 'concept-label')
+      .attr('dy', d => d.r + 12)
+      .attr('text-anchor', 'middle')
+      .attr('fill', 'rgba(255,255,255,0.45)')
+      .attr('font-size', '8px')
+      .attr('font-family', 'var(--font-mono)')
+      .attr('letter-spacing', '0.5px')
+      .text(d => d.label);
+
+    this.nodeElements = nodeGroups;
+
+    // Events
+    nodeGroups
+      .on('mouseover', (event, d) => this._onConceptHover(event, d))
+      .on('mouseout', () => this._onHoverEnd())
+      .on('click', (event, d) => this._onConceptClick(event, d));
+
+    // Simulation — more spread out for concept graph
+    this.simulation = d3.forceSimulation(this.nodes)
+      .force('link', d3.forceLink(this.links).id(d => d.id).distance(120).strength(d => Math.min(0.2, d.weight * 0.03)))
+      .force('charge', d3.forceManyBody().strength(-80).distanceMax(400))
+      .force('center', d3.forceCenter(this.width / 2, this.height / 2).strength(0.03))
+      .force('collision', d3.forceCollide().radius(d => d.r + 10))
+      .force('x', d3.forceX(this.width / 2).strength(0.015))
+      .force('y', d3.forceY(this.height / 2).strength(0.015))
+      .alpha(0.8)
+      .alphaDecay(0.012)
+      .on('tick', () => this._tick());
+  },
+
+  _onConceptHover(event, d) {
+    const tooltip = document.getElementById('tooltip');
+    const title = document.getElementById('tooltip-title');
+    const meta = document.getElementById('tooltip-meta');
+
+    title.textContent = d.label;
+
+    // Build rich paper list HTML
+    const paperItems = d.papers.slice(0, 8).map(p => {
+      const dots = (p.domains || []).map(dom =>
+        `<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${DOMAIN_COLORS[dom] || '#888'};margin-right:3px;"></span>`
+      ).join('');
+      const titleText = p.title.length > 55 ? p.title.slice(0, 55) + '…' : p.title;
+      return `<div style="display:flex;align-items:flex-start;gap:6px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <div style="display:flex;align-items:center;gap:1px;flex-shrink:0;padding-top:3px;">${dots}</div>
+        <span style="font-size:10px;color:rgba(255,255,255,0.7);line-height:1.35;">${titleText}</span>
+      </div>`;
+    }).join('');
+    const extra = d.papers.length > 8 ? `<div style="font-size:9px;color:rgba(255,255,255,0.35);padding-top:4px;">+ ${d.papers.length - 8} more</div>` : '';
+
+    meta.innerHTML = `<div style="font-size:10px;color:rgba(255,255,255,0.4);margin-bottom:6px;">${d.paperCount} papers · ${d.domains.join(', ')}</div>${paperItems}${extra}`;
+
+    // Position tooltip
+    const mainRect = document.querySelector('.main')?.getBoundingClientRect() || { left: 0, top: 0 };
+    tooltip.classList.add('visible');
+    tooltip.style.left = (event.pageX - mainRect.left + 14) + 'px';
+    tooltip.style.top = (event.pageY - mainRect.top - 10) + 'px';
+
+    // Highlight connected concepts
+    const connectedIds = new Set();
+    connectedIds.add(d.id);
+    this.links.forEach(l => {
+      const sid = typeof l.source === 'object' ? l.source.id : l.source;
+      const tid = typeof l.target === 'object' ? l.target.id : l.target;
+      if (sid === d.id) connectedIds.add(tid);
+      if (tid === d.id) connectedIds.add(sid);
+    });
+
+    this.nodeElements.classed('dimmed', n => !connectedIds.has(n.id));
+    this.nodeElements.classed('highlighted', n => connectedIds.has(n.id) && n.id !== d.id);
+    this.linkElements.classed('dimmed', l => {
+      const sid = typeof l.source === 'object' ? l.source.id : l.source;
+      const tid = typeof l.target === 'object' ? l.target.id : l.target;
+      return sid !== d.id && tid !== d.id;
+    });
+  },
+
+  _onConceptClick(event, d) {
+    this.selectedId = d.id;
+    this.nodeElements.classed('selected', n => n.id === d.id);
+    // Fire event with concept data (papers list)
+    window.dispatchEvent(new CustomEvent('scan:concept-select', { detail: d }));
+  },
+
   destroy() {
     if (this.simulation) this.simulation.stop();
     if (this.svg) this.svg.remove();

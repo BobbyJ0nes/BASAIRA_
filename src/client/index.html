@@ -26,8 +26,10 @@
         <div class="header__stats">
           <span id="stat-papers">0</span> papers · <span id="stat-edges">0</span> links · <span id="stat-overlap">0</span> overlap
         </div>
+        <button class="btn btn--icon" id="btn-upload" title="Upload PDF">+ PDF</button>
         <button class="btn btn--icon" id="btn-refresh" title="Refresh data from arXiv">⟳</button>
         <button class="btn btn--icon" id="btn-export" title="Export vault">⤓</button>
+        <input type="file" id="pdf-input" accept=".pdf" style="display:none">
       </div>
     </header>
 
@@ -39,6 +41,7 @@
         <div class="view-toggles">
           <button class="btn btn--active" id="btn-view-graph">◉ Graph</button>
           <button class="btn" id="btn-view-list">☰ List</button>
+          <button class="btn btn--subtle" id="btn-graph-mode" title="Toggle concept/paper graph">◎ papers</button>
         </div>
       </div>
 

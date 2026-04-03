@@ -35,7 +35,9 @@ const DOMAIN_LABELS = {
 let allPapers = [];
 let allEdges = [];
 let domainStats = {};
+let conceptGraphData = null;
 let currentView = 'graph';
+let graphMode = 'concepts'; // 'concepts' or 'papers'
 
 // ─── INITIALIZATION ───
 async function init() {
@@ -70,8 +72,15 @@ async function loadData() {
     renderTagCloud(tagsRes);
     renderQueue();
 
-    // Render graph
-    GraphEngine.setData(allPapers, allEdges);
+    // Load concept graph by default
+    try {
+      const conceptRes = await fetch('/api/concept-graph').then(r => r.json());
+      conceptGraphData = conceptRes;
+      GraphEngine.setConceptData(conceptRes);
+    } catch (err) {
+      console.log('Concept graph failed, falling back to paper graph');
+      GraphEngine.setData(allPapers, allEdges);
+    }
 
     // Zoom to fit after simulation settles
     setTimeout(() => GraphEngine.zoomToFit(), 2000);
@@ -329,6 +338,50 @@ function filterPapers() {
 }
 
 // ─── DETAIL PANEL ───
+function openConceptPanel(concept) {
+  const panel = document.getElementById('detail-panel');
+  const body = document.getElementById('panel-body');
+
+  const primaryColor = DOMAIN_COLORS[concept.primaryDomain] || '#888';
+
+  body.innerHTML = `
+    <div class="panel-concept">
+      <div class="panel-concept__header">
+        <div class="panel-concept__domains">
+          ${concept.domains.map(d => `<span class="detail-panel__domain-tag" style="color:${DOMAIN_COLORS[d]};border-color:${DOMAIN_COLORS[d]}30;background:${DOMAIN_COLORS[d]}10">${DOMAIN_LABELS[d] || d}</span>`).join('')}
+        </div>
+        <h2 class="panel-concept__title" style="color:${primaryColor}">${concept.label}</h2>
+        <div class="panel-concept__meta">${concept.paperCount} papers · ${concept.domains.length} domain${concept.domains.length > 1 ? 's' : ''}</div>
+      </div>
+
+      <div class="panel-concept__section-title">Papers containing this concept</div>
+      <div class="panel-concept__papers">
+        ${concept.papers.map(p => {
+          const fullPaper = allPapers.find(fp => fp.id === p.id);
+          if (!fullPaper) return '';
+          const pColor = DOMAIN_COLORS[fullPaper.domains[0]] || '#888';
+          return `
+            <div class="panel-concept__paper" data-id="${p.id}" style="border-left-color:${pColor}">
+              <div class="panel-concept__paper-title">${fullPaper.title}</div>
+              <div class="panel-concept__paper-meta">${fullPaper.authors.slice(0, 2).join(', ')}${fullPaper.authors.length > 2 ? ' et al.' : ''} · ${fullPaper.domains.join(', ')}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
+
+  // Click paper in concept panel → open that paper
+  body.querySelectorAll('.panel-concept__paper').forEach(el => {
+    el.addEventListener('click', () => {
+      const paper = allPapers.find(p => p.id === el.dataset.id);
+      if (paper) openPaperPanel(paper);
+    });
+  });
+
+  panel.classList.add('open');
+}
+
 function openPaperPanel(paper) {
   const panel = document.getElementById('detail-panel');
   const body = document.getElementById('panel-body');
@@ -630,6 +683,59 @@ function setupEventListeners() {
   window.addEventListener('scan:paper-select', (e) => {
     const paper = allPapers.find(p => p.id === e.detail.id);
     if (paper) openPaperPanel(paper);
+  });
+
+  // Concept selection from concept graph
+  window.addEventListener('scan:concept-select', (e) => {
+    const concept = e.detail;
+    openConceptPanel(concept);
+  });
+
+  // Graph mode toggle (concepts ↔ papers)
+  document.getElementById('btn-graph-mode')?.addEventListener('click', () => {
+    if (graphMode === 'concepts') {
+      graphMode = 'papers';
+      GraphEngine.setData(allPapers, allEdges);
+      document.getElementById('btn-graph-mode').textContent = '◉ concepts';
+    } else {
+      graphMode = 'concepts';
+      if (conceptGraphData) GraphEngine.setConceptData(conceptGraphData);
+      document.getElementById('btn-graph-mode').textContent = '◎ papers';
+    }
+    setTimeout(() => GraphEngine.zoomToFit(), 1500);
+  });
+
+  // PDF Upload
+  document.getElementById('btn-upload').addEventListener('click', () => {
+    document.getElementById('pdf-input').click();
+  });
+
+  document.getElementById('pdf-input').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    notify(`Uploading "${file.name}"… this may take 30-60 seconds`, 'info');
+
+    const formData = new FormData();
+    formData.append('pdf', file);
+
+    try {
+      const res = await fetch('/api/papers/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+
+      if (data.success) {
+        notify(`Added: "${data.paper.title}" — ${data.paper.edgesAdded} connections found`, 'success');
+        // Reload data
+        await loadData();
+      } else {
+        notify('Upload failed: ' + (data.error || 'Unknown error'), 'warning');
+      }
+    } catch (err) {
+      notify('Upload failed: ' + err.message, 'warning');
+    }
+
+    // Reset file input
+    e.target.value = '';
   });
 
   // Refresh
