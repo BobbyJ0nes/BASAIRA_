@@ -419,7 +419,7 @@ function openPaperPanel(paper) {
 
     <div class="detail-panel__meta">
       📅 ${new Date(paper.published).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-      · <a href="${paper.arxivUrl}" target="_blank">arXiv:${paper.id}</a>
+      · ${paper.arxivUrl ? `<a href="${paper.arxivUrl}" target="_blank">arXiv:${paper.id}</a>` : '<span style="color:var(--cognition)">PDF upload</span>'}
     </div>
 
     <div class="detail-panel__authors">
@@ -465,8 +465,23 @@ function openPaperPanel(paper) {
     notify(now ? 'Added to Read Later' : 'Removed from Read Later', 'success');
   };
 
-  document.getElementById('panel-pdf').onclick = () => window.open(paper.pdfUrl, '_blank');
-  document.getElementById('panel-arxiv').onclick = () => window.open(paper.arxivUrl, '_blank');
+  // PDF button — show for arXiv papers and PDF uploads with stored file
+  const pdfBtn = document.getElementById('panel-pdf');
+  if (paper.pdfUrl) {
+    pdfBtn.style.display = '';
+    pdfBtn.onclick = () => window.open(paper.pdfUrl, '_blank');
+  } else {
+    pdfBtn.style.display = 'none';
+  }
+
+  // arXiv button — only for arXiv papers
+  const arxivBtn = document.getElementById('panel-arxiv');
+  if (paper.arxivUrl) {
+    arxivBtn.style.display = '';
+    arxivBtn.onclick = () => window.open(paper.arxivUrl, '_blank');
+  } else {
+    arxivBtn.style.display = 'none';
+  }
   document.getElementById('panel-vault').onclick = () => saveToVault(paper);
   document.getElementById('panel-read').onclick = () => window.open(`/reader.html?id=${encodeURIComponent(paper.id)}`, '_blank');
 
