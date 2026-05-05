@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-// BASIRA_ PDF Parser — Extract structured content from PDFs
+// BASAIRA_ PDF Parser — Extract structured content from PDFs
 // ═══════════════════════════════════════════════════════════
 //
 // Uses Gemini 2.5 Flash's document understanding to extract

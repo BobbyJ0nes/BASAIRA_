@@ -7,7 +7,7 @@ function fetchURL(url) {
   return new Promise((resolve, reject) => {
     const doFetch = (u, redirects = 0) => {
       if (redirects > 5) return reject(new Error('Too many redirects'));
-      https.get(u, { headers: { 'User-Agent': 'BASIRA/1.0' } }, (res) => {
+      https.get(u, { headers: { 'User-Agent': 'BASAIRA/1.0' } }, (res) => {
         if (res.statusCode === 301 || res.statusCode === 302) return doFetch(res.headers.location, redirects + 1);
         if (res.statusCode !== 200) return reject(new Error(`HTTP ${res.statusCode}`));
         let data = '';

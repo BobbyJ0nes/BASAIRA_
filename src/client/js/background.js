@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-// BASIRA_ Generative Background — Particle Field
+// BASAIRA_ Generative Background — Particle Field
 // ═══════════════════════════════════════════════════════════
 //
 // Canvas-rendered particle system behind the graph view.

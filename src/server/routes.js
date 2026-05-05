@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-// BASIRA_ API Routes
+// BASAIRA_ API Routes
 // ═══════════════════════════════════════════════════════════
 //
 // REST endpoints served under /api:
@@ -39,13 +39,13 @@ const fullTextCache = new Map();
 
 // Obsidian vault paths — matches animus-journal pattern
 const VAULT_BASE = process.env.VAULT_PATH || '';
-const VAULT_BASIRA_FOLDER = process.env.VAULT_BASIRA_FOLDER || 'scan';
-const VAULT_BASIRA_PATH = VAULT_BASE ? path.join(VAULT_BASE, VAULT_BASIRA_FOLDER) : '';
+const VAULT_BASAIRA_FOLDER = process.env.VAULT_BASAIRA_FOLDER || 'scan';
+const VAULT_BASAIRA_PATH = VAULT_BASE ? path.join(VAULT_BASE, VAULT_BASAIRA_FOLDER) : '';
 
 function ensureVaultDir() {
-  if (!VAULT_BASIRA_PATH) throw new Error('VAULT_PATH not configured in .env');
-  if (!fs.existsSync(VAULT_BASIRA_PATH)) {
-    fs.mkdirSync(VAULT_BASIRA_PATH, { recursive: true });
+  if (!VAULT_BASAIRA_PATH) throw new Error('VAULT_PATH not configured in .env');
+  if (!fs.existsSync(VAULT_BASAIRA_PATH)) {
+    fs.mkdirSync(VAULT_BASAIRA_PATH, { recursive: true });
   }
 }
 
@@ -155,7 +155,7 @@ router.get('/concept-graph', (req, res) => {
 // ═══════════════════════════════════════════════════════════
 
 const upload = multer({
-  dest: '/tmp/basira-uploads/',
+  dest: '/tmp/basaira-uploads/',
   limits: { fileSize: 20 * 1024 * 1024 }, // 20MB max
   fileFilter: (req, file, cb) => {
     if (file.mimetype === 'application/pdf') cb(null, true);
@@ -392,7 +392,7 @@ router.post('/export', (req, res) => {
       `tags: [${p.tags.join(', ')}]`,
       `arxiv: ${p.arxivUrl}`,
       `pdf: ${p.pdfUrl}`,
-      `source: BASIRA_`,
+      `source: BASAIRA_`,
       '---',
     ].join('\n');
 
@@ -645,7 +645,7 @@ router.post('/vault/save', (req, res) => {
       `tags: [${p.tags.map(t => t.replace(/\s+/g, '-')).join(', ')}]`,
       `arxiv: ${p.arxivUrl}`,
       `pdf: ${p.pdfUrl}`,
-      `source: BASIRA_`,
+      `source: BASAIRA_`,
       `saved: ${dateStr}`,
       '---',
       '',
@@ -726,10 +726,10 @@ router.post('/vault/save', (req, res) => {
     // Tags
     lines.push('## Tags');
     lines.push('');
-    lines.push(p.tags.map(t => `#${t.replace(/\s+/g, '-')}`).join(' ') + ' #basira');
+    lines.push(p.tags.map(t => `#${t.replace(/\s+/g, '-')}`).join(' ') + ' #basaira');
     lines.push('');
     lines.push('---');
-    lines.push(`*Saved from BASIRA_ — ${now.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}*`);
+    lines.push(`*Saved from BASAIRA_ — ${now.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}*`);
     lines.push('');
 
     // Use paper title as filename, sanitized for filesystem
@@ -740,7 +740,7 @@ router.post('/vault/save', (req, res) => {
       .slice(0, 120);                 // Cap length
     const filename = `${safeTitle}.md`;
     const fullContent = lines.join('\n');
-    const filepath = path.join(VAULT_BASIRA_PATH, filename);
+    const filepath = path.join(VAULT_BASAIRA_PATH, filename);
 
     fs.writeFileSync(filepath, fullContent, 'utf-8');
 
@@ -762,13 +762,13 @@ router.post('/vault/save', (req, res) => {
 router.get('/vault/list', (req, res) => {
   try {
     ensureVaultDir();
-    const files = fs.readdirSync(VAULT_BASIRA_PATH)
+    const files = fs.readdirSync(VAULT_BASAIRA_PATH)
       .filter(f => f.endsWith('.md'))
       .sort()
       .reverse();
 
     const entries = files.map(f => {
-      const content = fs.readFileSync(path.join(VAULT_BASIRA_PATH, f), 'utf-8');
+      const content = fs.readFileSync(path.join(VAULT_BASAIRA_PATH, f), 'utf-8');
       const titleMatch = content.match(/^# (.+)$/m);
       return {
         filename: f,

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-// BASIRA_ Concept Graph — Build concept-level knowledge graph
+// BASAIRA_ Concept Graph — Build concept-level knowledge graph
 // ═══════════════════════════════════════════════════════════
 //
 // Transforms paper-level data into a concept graph where:

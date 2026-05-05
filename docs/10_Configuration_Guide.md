@@ -13,7 +13,7 @@ GEMINI_API_KEY=your_gemini_api_key_here
 
 # Optional: Obsidian vault integration (localhost only)
 VAULT_PATH=/path/to/your/obsidian/vault
-VAULT_BASIRA_FOLDER=basira
+VAULT_BASAIRA_FOLDER=basaira
 ```
 
 ### Production (Vercel dashboard)
@@ -31,14 +31,14 @@ SUPABASE_SECRET_KEY=sb_secret_your_key_here
 3. Generate an API key
 4. Copy to `.env`
 
-The free tier is sufficient for BASIRA_'s usage. See [[03_AI_Integration#Cost and Rate Considerations]].
+The free tier is sufficient for BASAIRA_'s usage. See [[03_AI_Integration#Cost and Rate Considerations]].
 
 ### Vault Path
 Set `VAULT_PATH` to the **root** of your Obsidian vault. `VAULT_SCAN_FOLDER` is the subfolder within it. Example:
 ```
 VAULT_PATH=/Users/you/Documents/MyVault
-VAULT_SCAN_FOLDER=Research/BASIRA_
-→ Files saved to: /Users/you/Documents/MyVault/Research/BASIRA_/
+VAULT_SCAN_FOLDER=Research/BASAIRA_
+→ Files saved to: /Users/you/Documents/MyVault/Research/BASAIRA_/
 ```
 
 ---
@@ -99,7 +99,7 @@ domainKey: {
 ### arXiv Category Reference
 Full list: [arxiv.org/category_taxonomy](https://arxiv.org/category_taxonomy)
 
-Common categories used in BASIRA_:
+Common categories used in BASAIRA_:
 - `q-bio.NC` — Quantitative Biology: Neurons and Cognition
 - `cs.AI` — Computer Science: Artificial Intelligence
 - `cs.LG` — Computer Science: Machine Learning
@@ -159,7 +159,7 @@ The recommended deployment. Already configured and live at [basaira.vercel.app](
 3. Free tier: spins down after 15min inactivity (~30s cold start)
 
 ### GitHub Pages
-**Not supported.** BASIRA_ requires serverless functions or a Node.js server for the API layer.
+**Not supported.** BASAIRA_ requires serverless functions or a Node.js server for the API layer.
 
 ---
 

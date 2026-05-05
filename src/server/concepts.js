@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-// BASIRA_ Concept Explorer — AI-powered in-paper concept search
+// BASAIRA_ Concept Explorer — AI-powered in-paper concept search
 // ═══════════════════════════════════════════════════════════
 //
 // Uses Gemini 2.5 Flash to:

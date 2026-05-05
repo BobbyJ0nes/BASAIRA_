@@ -2,7 +2,7 @@
 
 > *Back to [[00_Index]]*
 
-Every significant bug encountered during development, in roughly chronological order. Each entry documents what broke, why, and how it was fixed. This is both a debugging reference and a design history — many of BASIRA_'s architectural decisions were shaped by these bugs.
+Every significant bug encountered during development, in roughly chronological order. Each entry documents what broke, why, and how it was fixed. This is both a debugging reference and a design history — many of BASAIRA_'s architectural decisions were shaped by these bugs.
 
 ---
 

@@ -4,7 +4,7 @@
 
 ## Overview
 
-The highlight system is the most complex piece of client-side logic in BASIRA_. It handles creating, rendering, persisting, and interacting with text annotations across a full research paper. This document covers the technical implementation, the matching algorithm, and the specific bugs that shaped the current design.
+The highlight system is the most complex piece of client-side logic in BASAIRA_. It handles creating, rendering, persisting, and interacting with text annotations across a full research paper. This document covers the technical implementation, the matching algorithm, and the specific bugs that shaped the current design.
 
 ---
 

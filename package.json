@@ -1,7 +1,7 @@
 {
-  "name": "basira",
+  "name": "basaira",
   "version": "1.0.0",
-  "description": "BASIRA_ — Research paper discovery engine",
+  "description": "BASAIRA_ — Research paper discovery engine",
   "main": "src/server/index.js",
   "type": "module",
   "scripts": {

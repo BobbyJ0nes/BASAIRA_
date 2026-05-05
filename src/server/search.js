@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-// BASIRA_ Conceptual Search Engine
+// BASAIRA_ Conceptual Search Engine
 // ═══════════════════════════════════════════════════════════
 //
 // Concept-based search using TF-IDF cosine similarity.

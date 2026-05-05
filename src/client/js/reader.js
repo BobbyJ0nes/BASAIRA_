@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-// BASIRA_ Reader — Paper reading & annotation controller
+// BASAIRA_ Reader — Paper reading & annotation controller
 // ═══════════════════════════════════════════════════════════
 
 const DOMAIN_COLORS = {
@@ -46,7 +46,7 @@ function setupSidebarToggle() {
   const btn = document.getElementById('sidebar-toggle');
   const layout = document.querySelector('.reader-layout');
   // Restore state
-  if (localStorage.getItem('basira_sidebar_collapsed') === '1') {
+  if (localStorage.getItem('basaira_sidebar_collapsed') === '1') {
     layout.classList.add('sidebar-collapsed');
     btn.textContent = '▶';
   }
@@ -54,7 +54,7 @@ function setupSidebarToggle() {
     layout.classList.toggle('sidebar-collapsed');
     const collapsed = layout.classList.contains('sidebar-collapsed');
     btn.textContent = collapsed ? '▶' : '◀';
-    localStorage.setItem('basira_sidebar_collapsed', collapsed ? '1' : '0');
+    localStorage.setItem('basaira_sidebar_collapsed', collapsed ? '1' : '0');
   });
 }
 
@@ -1156,7 +1156,7 @@ async function saveToVault() {
 
 // ─── PERSISTENCE ───
 function getAnnotationKey() {
-  return `basira_annotations_${paperData.id}`;
+  return `basaira_annotations_${paperData.id}`;
 }
 
 function loadAnnotations() {

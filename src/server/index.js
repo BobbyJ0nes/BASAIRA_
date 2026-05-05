@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-// BASIRA_ Server — Entry Point
+// BASAIRA_ Server — Entry Point
 // ═══════════════════════════════════════════════════════════
 //
 // Express server that:
@@ -66,11 +66,11 @@ async function start() {
   await initData();
 
   app.listen(SERVER_PORT, () => {
-    console.log(`\n  ▸ BASIRA_ running at http://localhost:${SERVER_PORT}\n`);
+    console.log(`\n  ▸ BASAIRA_ running at http://localhost:${SERVER_PORT}\n`);
   });
 }
 
 start().catch(err => {
-  console.error('Failed to start BASIRA_:', err);
+  console.error('Failed to start BASAIRA_:', err);
   process.exit(1);
 });

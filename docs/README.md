@@ -1,4 +1,4 @@
-# BASIRA_ — Systematic Curation & Analysis Network
+# BASAIRA_ — Systematic Curation & Analysis Network
 
 > A research paper discovery engine rendered as a living knowledge graph.  
 > V1 · April 2026
@@ -9,8 +9,8 @@
 
 ```bash
 # Clone and install
-git clone https://github.com/YOUR_USER/BASIRA_.git
-cd BASIRA_
+git clone https://github.com/YOUR_USER/BASAIRA_.git
+cd BASAIRA_
 npm install
 
 # Configure
@@ -36,7 +36,7 @@ See [[00_Index]] for the complete documentation — architecture, design philoso
 
 ## What This Is
 
-BASIRA_ harvests the latest research papers from arXiv, maps them into an interconnected knowledge graph, and serves the whole thing as a localhost web application. You explore papers the way you explore an Obsidian vault — by navigating connections, not by scrolling lists.
+BASAIRA_ harvests the latest research papers from arXiv, maps them into an interconnected knowledge graph, and serves the whole thing as a localhost web application. You explore papers the way you explore an Obsidian vault — by navigating connections, not by scrolling lists.
 
 Papers are **nodes**. Shared keywords, authors, and arXiv categories form **edges**. The graph self-organizes by relatedness. You click into any node to read the abstract, save it for later, take notes, or export it as Obsidian-compatible Markdown.
 
@@ -46,7 +46,7 @@ The aesthetic is deliberately computational — net art particle fields, monospa
 
 ## Domains
 
-BASIRA_ tracks five research areas. Each has a dedicated color throughout the interface.
+BASAIRA_ tracks five research areas. Each has a dedicated color throughout the interface.
 
 | Domain | Color | arXiv Source | What It Covers |
 |--------|-------|-------------|----------------|
@@ -63,7 +63,7 @@ Papers that span multiple domains appear as **white nodes** and are tagged `OVER
 ## Quick Start
 
 ```bash
-cd /home/BASE/BSR/BASAIRA/01-Projects/BASIRA_
+cd /home/BASE/BSR/BASAIRA/01-Projects/BASAIRA_
 
 # Install dependencies (first time only)
 npm install
@@ -150,7 +150,7 @@ domains: [neuroscience, cognition]
 tags: [neural, brain, cortex]
 arxiv: https://arxiv.org/abs/2603.30004v1
 pdf: https://arxiv.org/pdf/2603.30004v1
-source: BASIRA_
+source: BASAIRA_
 ---
 ```
 
@@ -200,7 +200,7 @@ The generative background is a canvas-based particle system: ~100 particles in t
 ## Project Structure
 
 ```
-BASIRA_/
+BASAIRA_/
 ├── docs/
 │   ├── README.md              ← You are here
 │   ├── ARCHITECTURE.md        ← System design, data flow, edge logic

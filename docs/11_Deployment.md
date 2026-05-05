@@ -4,7 +4,7 @@
 
 ## Overview
 
-BASIRA_ runs in two modes:
+BASAIRA_ runs in two modes:
 
 | Mode | Frontend | API | Database | Use |
 |------|----------|-----|----------|-----|
@@ -61,7 +61,7 @@ authors TEXT[]                -- Postgres array
 abstract TEXT
 published TIMESTAMPTZ
 categories TEXT[]             -- arXiv categories
-domains TEXT[]                -- BASIRA_ domain keys
+domains TEXT[]                -- BASAIRA_ domain keys
 tags TEXT[]                   -- Extracted keywords
 is_overlap BOOLEAN
 arxiv_url TEXT
@@ -145,7 +145,7 @@ Set in Vercel dashboard (**Settings → Environment Variables**):
 | `SUPABASE_SECRET_KEY` | `sb_secret_...` | All API functions (write access) |
 
 ### Key Types
-BASIRA_ uses Supabase's **new-style keys** (not legacy JWT):
+BASAIRA_ uses Supabase's **new-style keys** (not legacy JWT):
 - **Publishable** (`sb_publishable_...`): Not used server-side. Could be used client-side in future.
 - **Secret** (`sb_secret_...`): Used in all serverless functions. Bypasses RLS. Never exposed to client.
 
@@ -209,7 +209,7 @@ To refresh papers from arXiv in production, a refresh endpoint would need to be 
 
 All services are on free tiers:
 
-| Service | Tier | Limit | BASIRA_ Usage |
+| Service | Tier | Limit | BASAIRA_ Usage |
 |---------|------|-------|---------------|
 | Vercel | Hobby (free) | 100GB bandwidth, 10s default timeout | ~500MB/month |
 | Supabase | Free | 500MB database, 50K rows | ~5MB, ~1100 rows |

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-// BASIRA_ Graph Engine — D3.js Force-Directed Knowledge Graph
+// BASAIRA_ Graph Engine — D3.js Force-Directed Knowledge Graph
 // ═══════════════════════════════════════════════════════════
 //
 // Renders all papers as an interactive force-directed graph.

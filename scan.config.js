@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════════════════
-// BASIRA_ Configuration
+// BASAIRA_ Configuration
 // ═══════════════════════════════════════════════════════════
 //
-// Central configuration for all BASIRA_ domains, server settings,
+// Central configuration for all BASAIRA_ domains, server settings,
 // and arXiv API parameters.
 //
 // To add a new research domain:

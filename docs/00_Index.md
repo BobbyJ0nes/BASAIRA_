@@ -1,10 +1,10 @@
-# BASIRA_ — Documentation Index
+# BASAIRA_ — Documentation Index
 
 > *Research Discovery Engine*
 > *A research paper discovery engine rendered as a living knowledge graph.*
 > *V1 · April 2026*
 
-BASIRA_ harvests recent research papers from arXiv across five interdisciplinary domains, maps them into a force-directed knowledge graph, and provides an in-app reading experience with AI-powered concept exploration. The aesthetic is deliberately computational — net art particle fields, neon domain colours, terminal typography on near-black. A practical research tool wrapped in generative visual texture.
+BASAIRA_ harvests recent research papers from arXiv across five interdisciplinary domains, maps them into a force-directed knowledge graph, and provides an in-app reading experience with AI-powered concept exploration. The aesthetic is deliberately computational — net art particle fields, neon domain colours, terminal typography on near-black. A practical research tool wrapped in generative visual texture.
 
 **Live**: [basaira.vercel.app](https://basaira.vercel.app)
 **Repo**: [github.com/BobbyJ0nes/BASAIRA_](https://github.com/BobbyJ0nes/BASAIRA_)
@@ -37,7 +37,7 @@ BASIRA_ harvests recent research papers from arXiv across five interdisciplinary
 ## Quick Orientation
 
 ```
-BASIRA_/
+BASAIRA_/
 ├── docs/                  ← you are here
 ├── api/                   ← Vercel serverless functions
 │   ├── _lib/supabase.js   # Shared Supabase client

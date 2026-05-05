@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-// BASIRA_ State Manager
+// BASAIRA_ State Manager
 // ═══════════════════════════════════════════════════════════
 //
 // localStorage-backed reactive store for all user state.
@@ -19,10 +19,10 @@
 //   Store.toggleReadLater('2603.30004v1') → boolean (new state)
 //   Store.on((key, value) => { ... })     → register listener
 //
-// localStorage key: 'basira_state'
+// localStorage key: 'basaira_state'
 //
 // ═══════════════════════════════════════════════════════════
-const STORAGE_KEY = 'basira_state';
+const STORAGE_KEY = 'basaira_state';
 
 const Store = {
   _state: {

@@ -4,7 +4,7 @@
 
 ## Overview
 
-BASIRA_ is a two-tier application with **dual deployment modes**:
+BASAIRA_ is a two-tier application with **dual deployment modes**:
 
 - **Production** ([basaira.vercel.app](https://basaira.vercel.app)): Vercel serves static frontend + serverless API functions, Supabase provides Postgres storage
 - **Development** (`localhost:3000`): Express serves everything, filesystem for caching
@@ -128,7 +128,7 @@ V1 deliberately avoids React, Vue, bundlers, TypeScript, or any build tooling. T
 1. **Speed of iteration** — Save file, refresh browser, see changes. No compile wait.
 2. **Transparency** — Every file the browser loads is the file you wrote. No source maps needed.
 3. **Minimal dependency surface** — Three npm packages (`express`, `xml2js`, `dotenv`). Nothing else.
-4. **Appropriate complexity** — BASIRA_ is a personal research tool, not a team product. The codebase is ~6,300 LOC across 16 files. This is comfortably within vanilla JS territory.
+4. **Appropriate complexity** — BASAIRA_ is a personal research tool, not a team product. The codebase is ~6,300 LOC across 16 files. This is comfortably within vanilla JS territory.
 5. **D3 works best raw** — D3's functional paradigm maps naturally to vanilla JS. Wrapping it in React creates more problems than it solves.
 
 The trade-off is explicit: no type safety, no component reuse beyond copy-paste, no hot module replacement. For a tool this size, those trade-offs are acceptable.
@@ -156,7 +156,7 @@ The server holds all paper data in memory after loading from cache. There is no 
 
 ## Two-Page SPA
 
-BASIRA_ has exactly two HTML pages:
+BASAIRA_ has exactly two HTML pages:
 
 | Page | URL | Purpose |
 |------|-----|---------|

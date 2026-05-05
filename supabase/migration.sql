@@ -1,5 +1,5 @@
 -- ═══════════════════════════════════════════════════════════
--- BASIRA_ — Supabase Database Migration
+-- BASAIRA_ — Supabase Database Migration
 -- ═══════════════════════════════════════════════════════════
 -- Paste this entire file into the Supabase SQL Editor and click Run.
 

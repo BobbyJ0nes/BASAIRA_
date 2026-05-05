@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-// BASIRA_ Paper Parser — Extract full text from arXiv HTML
+// BASAIRA_ Paper Parser — Extract full text from arXiv HTML
 // ═══════════════════════════════════════════════════════════
 //
 // Fetches https://arxiv.org/html/{id} and extracts structured
@@ -28,7 +28,7 @@ function fetchURL(url) {
   return new Promise((resolve, reject) => {
     const doFetch = (u, redirects = 0) => {
       if (redirects > 5) return reject(new Error('Too many redirects'));
-      https.get(u, { headers: { 'User-Agent': 'BASIRA/1.0 (research-tool)' } }, (res) => {
+      https.get(u, { headers: { 'User-Agent': 'BASAIRA/1.0 (research-tool)' } }, (res) => {
         if (res.statusCode === 301 || res.statusCode === 302) {
           return doFetch(res.headers.location, redirects + 1);
         }

@@ -4,7 +4,7 @@
 
 ## The Aesthetic Premise
 
-BASIRA_ is built at the intersection of two ideas: **practical research tooling** and **net art / algorithmic art aesthetics**. The interface should feel like a living computational artefact — something that emerged from a generative system — while being genuinely useful for navigating research literature.
+BASAIRA_ is built at the intersection of two ideas: **practical research tooling** and **net art / algorithmic art aesthetics**. The interface should feel like a living computational artefact — something that emerged from a generative system — while being genuinely useful for navigating research literature.
 
 This isn't decoration. The aesthetic serves a purpose: it makes spending time with papers feel like operating an instrument, not reading a spreadsheet. It borrows from the traditions of:
 
@@ -75,7 +75,7 @@ The `body::after` pseudo-element renders faint horizontal scanlines (1px transpa
 The force-directed graph isn't a gimmick. It's the primary way to discover papers. The spatial layout encodes real information:
 
 - **Clusters** = papers that share many keywords/authors/categories. A dense cluster is a cohesive research area.
-- **Bridges** = papers with edges spanning two clusters. These are the interdisciplinary connections BASIRA_ exists to surface.
+- **Bridges** = papers with edges spanning two clusters. These are the interdisciplinary connections BASAIRA_ exists to surface.
 - **Isolates** = papers with few or no edges. These are either unique or from an under-represented area.
 - **Colour mixing** = when you see cyan and magenta nodes clustered together, that's neuroscience and AI converging.
 

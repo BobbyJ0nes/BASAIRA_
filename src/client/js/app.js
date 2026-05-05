@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-// BASIRA_ — Main Application Controller
+// BASAIRA_ — Main Application Controller
 // ═══════════════════════════════════════════════════════════
 //
 // Orchestrates the entire frontend. On DOMContentLoaded:

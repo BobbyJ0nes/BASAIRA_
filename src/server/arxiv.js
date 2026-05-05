@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════════════
-// BASIRA_ Data Pipeline — arXiv Fetcher, Parser & Edge Computer
+// BASAIRA_ Data Pipeline — arXiv Fetcher, Parser & Edge Computer
 // ═══════════════════════════════════════════════════════════
 //
 // This module is the core data engine. It:
@@ -7,7 +7,7 @@
 //   1. FETCH   — Queries arXiv's Atom API for each configured domain
 //   2. PARSE   — Converts XML entries into normalized paper objects
 //   3. EXTRACT — Pulls keywords from title+abstract via term frequency
-//   4. MAP     — Assigns BASIRA_ domains based on arXiv category codes
+//   4. MAP     — Assigns BASAIRA_ domains based on arXiv category codes
 //   5. LINK    — Computes weighted edges between papers sharing
 //                keywords, authors, categories, or domains
 //
@@ -25,7 +25,7 @@ import { DOMAINS, ARXIV_API_BASE, ARXIV_DELAY_MS } from '../../scan.config.js';
 
 function fetchURL(url) {
   return new Promise((resolve, reject) => {
-    https.get(url, { headers: { 'User-Agent': 'BASIRA/1.0 (research-tool)' } }, (res) => {
+    https.get(url, { headers: { 'User-Agent': 'BASAIRA/1.0 (research-tool)' } }, (res) => {
       if (res.statusCode === 301 || res.statusCode === 302) {
         return fetchURL(res.headers.location).then(resolve).catch(reject);
       }
@@ -85,7 +85,7 @@ function extractKeywords(text) {
     .map(([word]) => word);
 }
 
-// Map arXiv categories to BASIRA_ domains
+// Map arXiv categories to BASAIRA_ domains
 function mapDomains(categories) {
   const domainMap = {
     'q-bio.NC': ['neuroscience', 'cognition'],
@@ -165,7 +165,7 @@ export async function fetchPapersForQuery(query, maxResults = 40) {
 
 export async function fetchAllPapers() {
   console.log('\n╔══════════════════════════════════════╗');
-  console.log('║   BASIRA_ — Fetching papers from arXiv  ║');
+  console.log('║   BASAIRA_ — Fetching papers from arXiv  ║');
   console.log('╚══════════════════════════════════════╝\n');
 
   const allPapers = new Map(); // Deduplicate by ID

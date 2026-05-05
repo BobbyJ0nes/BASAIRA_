@@ -4,7 +4,7 @@
 
 ## Overview
 
-BASIRA_ uses Google's Gemini 2.5 Flash model for two operations within the paper reader:
+BASAIRA_ uses Google's Gemini 2.5 Flash model for two operations within the paper reader:
 
 1. **Concept Extraction** — Analyse a paper's text and extract 8-12 key concepts/themes
 2. **Passage Finding** — Given a concept, find 3-6 exact passages in the paper that relate to it
