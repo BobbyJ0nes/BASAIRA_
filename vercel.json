@@ -11,8 +11,6 @@
     { "source": "/api/papers", "destination": "/api/papers" },
     { "source": "/api/concept-graph", "destination": "/api/concept-graph" },
     { "source": "/api/export", "destination": "/api/export" },
-    { "source": "/api/refresh", "destination": "/api/refresh" },
-    { "source": "/api/vault/save", "destination": "/api/vault/save" },
     { "source": "/api/stats", "destination": "/api/stats" },
     { "source": "/api/domains", "destination": "/api/domains" },
     { "source": "/api/tags", "destination": "/api/tags" },

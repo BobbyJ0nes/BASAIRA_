@@ -546,6 +546,10 @@ function closePaperPanel() {
 }
 
 // ─── EXPORT ───
+// Tries the local-only /api/vault/save first (writes directly to the
+// configured Obsidian vault when running via `npm start`). On Vercel
+// that endpoint does not exist, so we fall back to a Markdown download
+// — same content, the user just drops it into their vault manually.
 async function saveToVault(paper) {
   try {
     const annotations = JSON.parse(localStorage.getItem(`scan_annotations_${paper.id}`) || '[]');
@@ -556,15 +560,17 @@ async function saveToVault(paper) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ paper, annotations, notes }),
     });
-    const data = await res.json();
-    if (data.success) {
-      notify(`Saved to Obsidian vault: ${data.filename}`, 'success');
-    } else {
-      notify('Vault save failed', 'warning');
+    if (res.ok) {
+      const data = await res.json().catch(() => ({}));
+      if (data.success) {
+        notify(`Saved to Obsidian vault: ${data.filename}`, 'success');
+        return;
+      }
     }
-  } catch (err) {
-    notify('Vault save failed', 'warning');
-  }
+  } catch {}
+
+  // Fallback: download the paper as Markdown
+  await exportSinglePaper(paper);
 }
 
 async function exportSinglePaper(paper) {
@@ -741,21 +747,6 @@ function setupEventListeners() {
   // Drawer (mobile sidebar) + Ingest sheet (PDF + arXiv URL)
   setupDrawer();
   setupIngestSheet();
-
-  // Refresh
-  document.getElementById('btn-refresh').addEventListener('click', async () => {
-    notify('Refreshing data from arXiv...', 'info');
-    try {
-      const res = await fetch('/api/refresh', { method: 'POST' });
-      const data = await res.json();
-      if (data.success) {
-        notify(`Refreshed: ${data.papers} papers, ${data.edges} edges`, 'success');
-        await loadData();
-      }
-    } catch (err) {
-      notify('Refresh failed', 'warning');
-    }
-  });
 
   // Export modal
   document.getElementById('btn-export').addEventListener('click', () => {

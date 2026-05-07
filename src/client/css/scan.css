@@ -1365,8 +1365,7 @@ body::after {
   .header__logo { gap: 8px; }
   .header__logo-text { font-size: 15px; letter-spacing: 4px; }
   .header__subtitle,
-  .header__stats,
-  #btn-refresh { display: none; }
+  .header__stats { display: none; }
 
   /* Hide the in-header upload button — replaced by FAB on mobile */
   #btn-upload { display: none; }
