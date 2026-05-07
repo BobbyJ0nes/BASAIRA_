@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#050508">
+  <meta name="color-scheme" content="dark">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>BASAIRA_ — Research Discovery Engine</title>
   <link rel="stylesheet" href="css/scan.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◉</text></svg>">
@@ -11,6 +15,7 @@
   <div id="app">
     <!-- ═══ HEADER ═══ -->
     <header class="header">
+      <button class="header__menu" id="btn-menu" aria-label="Open menu" aria-controls="sidebar" aria-expanded="false">☰</button>
       <div class="header__logo">
         <div>
           <div class="header__logo-text">BASAIRA<span class="header__logo-cursor"></span></div>
@@ -26,15 +31,18 @@
         <div class="header__stats">
           <span id="stat-papers">0</span> papers · <span id="stat-edges">0</span> links · <span id="stat-overlap">0</span> overlap
         </div>
-        <button class="btn btn--icon" id="btn-upload" title="Upload PDF">+ PDF</button>
+        <button class="btn btn--icon" id="btn-upload" title="Add paper">+ paper</button>
         <button class="btn btn--icon" id="btn-refresh" title="Refresh data from arXiv">⟳</button>
         <button class="btn btn--icon" id="btn-export" title="Export vault">⤓</button>
         <input type="file" id="pdf-input" accept=".pdf" style="display:none">
       </div>
     </header>
 
+    <!-- Drawer backdrop (mobile only — visible when sidebar is open) -->
+    <div class="drawer-backdrop" id="drawer-backdrop"></div>
+
     <!-- ═══ SIDEBAR ═══ -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
       <!-- View toggle -->
       <div class="sidebar__section">
         <div class="sidebar__section-title">View</div>
@@ -106,6 +114,38 @@
         <div class="graph-tooltip__meta" id="tooltip-meta"></div>
       </div>
     </main>
+  </div>
+
+  <!-- Floating action button (mobile only) -->
+  <button class="fab" id="btn-fab" aria-label="Add paper">+</button>
+
+  <!-- Ingest sheet (bottom sheet on mobile, centered on desktop) -->
+  <div class="sheet-backdrop" id="ingest-sheet" role="dialog" aria-modal="true" aria-labelledby="ingest-sheet-title">
+    <div class="sheet">
+      <div class="sheet__handle" aria-hidden="true"></div>
+      <div class="sheet__title" id="ingest-sheet-title">Add paper</div>
+
+      <button class="sheet__action" id="ingest-pdf">
+        <span class="sheet__action-icon" aria-hidden="true">📄</span>
+        <div class="sheet__action-body">
+          <div class="sheet__action-title">Upload PDF</div>
+          <div class="sheet__action-desc">Parsed by Gemini, added to graph</div>
+        </div>
+      </button>
+
+      <div class="sheet__action sheet__action--input">
+        <input type="url" id="ingest-arxiv-input" placeholder="https://arxiv.org/abs/…" autocomplete="off" inputmode="url" spellcheck="false">
+        <button class="btn btn--accent" id="ingest-arxiv-go">Add</button>
+      </div>
+      <div class="sheet__action-hint">Paste an arXiv URL or ID</div>
+
+      <div class="sheet__progress" id="ingest-progress" hidden>
+        <div class="sheet__progress-text" id="ingest-progress-text">Working…</div>
+        <div class="sheet__progress-bar"><div class="sheet__progress-fill"></div></div>
+      </div>
+
+      <button class="sheet__cancel" id="ingest-cancel">Cancel</button>
+    </div>
   </div>
 
   <!-- Export modal -->

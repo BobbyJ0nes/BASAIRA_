@@ -28,6 +28,12 @@ const BgCanvas = {
   init() {
     this.canvas = document.getElementById('bg-canvas');
     if (!this.canvas) return;
+    // Skip on mobile and when the user prefers reduced motion — saves battery
+    // and matches the CSS `display:none` rule that hides the canvas there.
+    const skip =
+      window.matchMedia('(max-width: 900px)').matches ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (skip) return;
     this.ctx = this.canvas.getContext('2d');
     this.resize();
     this.createParticles();

@@ -32,6 +32,10 @@ const DOMAIN_LABELS = {
   biomimetics: 'Biomimetics',
 };
 
+// Mobile breakpoint matches scan.css drawer/FAB media query
+const MOBILE_QUERY = '(max-width: 900px)';
+const isMobile = () => window.matchMedia(MOBILE_QUERY).matches;
+
 let allPapers = [];
 let allEdges = [];
 let domainStats = {};
@@ -46,7 +50,16 @@ async function init() {
 
   await loadData();
   setupEventListeners();
+  applyDefaultView();
   hideLoading();
+}
+
+// Default to list view on mobile, unless the user has explicitly chosen graph
+// (we remember their override across sessions in localStorage).
+function applyDefaultView() {
+  if (!isMobile()) return;
+  if (localStorage.getItem('basaira_view_override') === '1') return;
+  switchView('list', { skipOverride: true });
 }
 
 async function loadData() {
@@ -611,9 +624,14 @@ function notify(message, type = 'info') {
 }
 
 // ─── VIEW SWITCHING ───
-function switchView(view) {
+function switchView(view, opts = {}) {
   currentView = view;
   Store.set('view', view);
+  // Mark that the user has chosen a view explicitly; subsequent loads
+  // honor it instead of the mobile default.
+  if (!opts.skipOverride) {
+    localStorage.setItem('basaira_view_override', '1');
+  }
 
   const graphBtn = document.getElementById('btn-view-graph');
   const listBtn = document.getElementById('btn-view-list');
@@ -720,38 +738,9 @@ function setupEventListeners() {
     setTimeout(() => GraphEngine.zoomToFit(), 1500);
   });
 
-  // PDF Upload
-  document.getElementById('btn-upload').addEventListener('click', () => {
-    document.getElementById('pdf-input').click();
-  });
-
-  document.getElementById('pdf-input').addEventListener('change', async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    notify(`Uploading "${file.name}"… this may take 30-60 seconds`, 'info');
-
-    const formData = new FormData();
-    formData.append('pdf', file);
-
-    try {
-      const res = await fetch('/api/papers/upload', { method: 'POST', body: formData });
-      const data = await res.json();
-
-      if (data.success) {
-        notify(`Added: "${data.paper.title}" — ${data.paper.edgesAdded} connections found`, 'success');
-        // Reload data
-        await loadData();
-      } else {
-        notify('Upload failed: ' + (data.error || 'Unknown error'), 'warning');
-      }
-    } catch (err) {
-      notify('Upload failed: ' + err.message, 'warning');
-    }
-
-    // Reset file input
-    e.target.value = '';
-  });
+  // Drawer (mobile sidebar) + Ingest sheet (PDF + arXiv URL)
+  setupDrawer();
+  setupIngestSheet();
 
   // Refresh
   document.getElementById('btn-refresh').addEventListener('click', async () => {
@@ -794,6 +783,162 @@ function setupEventListeners() {
   // Store changes
   Store.on((key) => {
     if (key === 'readLater') renderQueue();
+  });
+}
+
+// ─── DRAWER (mobile sidebar) ───
+function setupDrawer() {
+  const sidebar = document.getElementById('sidebar');
+  const backdrop = document.getElementById('drawer-backdrop');
+  const menuBtn = document.getElementById('btn-menu');
+  if (!sidebar || !backdrop || !menuBtn) return;
+
+  const open = () => {
+    sidebar.classList.add('drawer-open');
+    backdrop.classList.add('visible');
+    menuBtn.setAttribute('aria-expanded', 'true');
+  };
+  const close = () => {
+    sidebar.classList.remove('drawer-open');
+    backdrop.classList.remove('visible');
+    menuBtn.setAttribute('aria-expanded', 'false');
+  };
+  const isOpen = () => sidebar.classList.contains('drawer-open');
+
+  menuBtn.addEventListener('click', () => isOpen() ? close() : open());
+  backdrop.addEventListener('click', close);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isOpen()) close();
+  });
+
+  // Auto-close drawer when the user picks a domain, tag, queue item,
+  // or flips views — they want to see the result, not the drawer.
+  sidebar.addEventListener('click', (e) => {
+    if (!isMobile() || !isOpen()) return;
+    if (e.target.closest('.domain-filter, .tag-pill, .queue-item, #btn-view-graph, #btn-view-list')) {
+      setTimeout(close, 160);
+    }
+  });
+
+  // If viewport grows past mobile, leave drawer state behind.
+  window.matchMedia(MOBILE_QUERY).addEventListener('change', (e) => {
+    if (!e.matches) close();
+  });
+}
+
+// ─── INGEST SHEET (PDF + arXiv URL) ───
+function setupIngestSheet() {
+  const sheet = document.getElementById('ingest-sheet');
+  const fab = document.getElementById('btn-fab');
+  const headerBtn = document.getElementById('btn-upload');
+  const pdfBtn = document.getElementById('ingest-pdf');
+  const arxivInput = document.getElementById('ingest-arxiv-input');
+  const arxivGo = document.getElementById('ingest-arxiv-go');
+  const cancelBtn = document.getElementById('ingest-cancel');
+  const fileInput = document.getElementById('pdf-input');
+  const progress = document.getElementById('ingest-progress');
+  const progressText = document.getElementById('ingest-progress-text');
+
+  if (!sheet || !fileInput) return;
+
+  let busy = false;
+
+  function openSheet() {
+    sheet.classList.add('open');
+    progress.hidden = true;
+    progress.classList.remove('sheet__progress--error');
+    arxivInput.value = '';
+  }
+  function closeSheet() {
+    if (busy) return; // Don't let users dismiss mid-upload
+    sheet.classList.remove('open');
+  }
+  function showProgress(text, { error = false } = {}) {
+    progress.hidden = false;
+    progress.classList.toggle('sheet__progress--error', error);
+    progressText.textContent = text;
+  }
+
+  fab?.addEventListener('click', openSheet);
+  headerBtn?.addEventListener('click', openSheet);
+  cancelBtn?.addEventListener('click', closeSheet);
+
+  // Tap backdrop to dismiss (but not during upload)
+  sheet.addEventListener('click', (e) => {
+    if (e.target === sheet) closeSheet();
+  });
+
+  // Esc closes the sheet
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && sheet.classList.contains('open')) closeSheet();
+  });
+
+  // Tap "Upload PDF" → trigger native file picker
+  pdfBtn?.addEventListener('click', () => fileInput.click());
+
+  // Native file picker → upload
+  fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+
+    if (!sheet.classList.contains('open')) openSheet();
+    busy = true;
+    showProgress(`Uploading "${file.name}" — Gemini parsing usually takes 30–60s…`);
+
+    const formData = new FormData();
+    formData.append('pdf', file);
+
+    try {
+      const res = await fetch('/api/papers/upload', { method: 'POST', body: formData });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        notify(`Added: "${data.paper.title}" — ${data.paper.edgesAdded} connections found`, 'success');
+        busy = false;
+        closeSheet();
+        await loadData();
+      } else {
+        showProgress(data.error || `Upload failed (HTTP ${res.status})`, { error: true });
+        busy = false;
+      }
+    } catch (err) {
+      showProgress('Upload failed: ' + err.message, { error: true });
+      busy = false;
+    }
+  });
+
+  // arXiv URL flow
+  async function submitArxiv() {
+    const url = arxivInput.value.trim();
+    if (!url) { arxivInput.focus(); return; }
+    busy = true;
+    showProgress('Fetching from arXiv…');
+
+    try {
+      const res = await fetch('/api/papers/from-arxiv', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        notify(`Added: "${data.paper.title}"`, 'success');
+        busy = false;
+        closeSheet();
+        await loadData();
+      } else {
+        showProgress(data.error || `arXiv fetch failed (HTTP ${res.status})`, { error: true });
+        busy = false;
+      }
+    } catch (err) {
+      showProgress('arXiv fetch failed: ' + err.message, { error: true });
+      busy = false;
+    }
+  }
+  arxivGo?.addEventListener('click', submitArxiv);
+  arxivInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); submitArxiv(); }
   });
 }
 
