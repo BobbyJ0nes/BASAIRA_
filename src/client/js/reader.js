@@ -45,7 +45,7 @@ async function initReader() {
 function setupSidebarToggle() {
   const btn = document.getElementById('sidebar-toggle');
   const layout = document.querySelector('.reader-layout');
-  // Restore state
+  // Restore desktop collapse state
   if (localStorage.getItem('basaira_sidebar_collapsed') === '1') {
     layout.classList.add('sidebar-collapsed');
     btn.textContent = '▶';
@@ -55,6 +55,79 @@ function setupSidebarToggle() {
     const collapsed = layout.classList.contains('sidebar-collapsed');
     btn.textContent = collapsed ? '▶' : '◀';
     localStorage.setItem('basaira_sidebar_collapsed', collapsed ? '1' : '0');
+  });
+}
+
+// TOC sheet: a bottom sheet on mobile listing every section. Tap to scroll.
+function setupTocSheet() {
+  const btn = document.getElementById('reader-toc-btn');
+  const sheet = document.getElementById('toc-sheet');
+  const list = document.getElementById('toc-list');
+  const cancel = document.getElementById('toc-cancel');
+  if (!btn || !sheet || !list) return;
+
+  function open() {
+    if (!paperData?.sections) return;
+    list.innerHTML = '';
+    let n = 0;
+    paperData.sections.forEach(s => {
+      if (!s.isSubsection) n++;
+      const li = document.createElement('li');
+      li.className = 'toc-list__item' + (s.isSubsection ? ' toc-list__item--sub' : '');
+      const numLabel = s.isSubsection ? '·' : String(n);
+      li.innerHTML = `<span class="toc-list__num">${numLabel}</span><span class="toc-list__title">${escapeHTML(s.title)}</span>`;
+      li.addEventListener('click', () => {
+        const target = document.getElementById('sec-' + s.id);
+        if (target) {
+          const headerH = 52;
+          const top = target.getBoundingClientRect().top + window.scrollY - headerH - 8;
+          window.scrollTo({ top, behavior: 'smooth' });
+        }
+        close();
+      });
+      list.appendChild(li);
+    });
+    sheet.classList.add('open');
+  }
+  function close() { sheet.classList.remove('open'); }
+
+  btn.addEventListener('click', open);
+  cancel.addEventListener('click', close);
+  sheet.addEventListener('click', (e) => { if (e.target === sheet) close(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && sheet.classList.contains('open')) close();
+  });
+}
+
+// Mobile-only: the right-edge slide-in drawer that holds annotations,
+// notes, the concept explorer, and connected papers. Triggered by ✎.
+function setupSidebarDrawer() {
+  const btn = document.getElementById('reader-notes-btn');
+  const sidebar = document.getElementById('reader-sidebar');
+  const backdrop = document.getElementById('reader-drawer-backdrop');
+  if (!btn || !sidebar || !backdrop) return;
+
+  const open = () => {
+    sidebar.classList.add('drawer-open');
+    backdrop.classList.add('visible');
+    btn.classList.add('active');
+  };
+  const close = () => {
+    sidebar.classList.remove('drawer-open');
+    backdrop.classList.remove('visible');
+    btn.classList.remove('active');
+  };
+  const isOpen = () => sidebar.classList.contains('drawer-open');
+
+  btn.addEventListener('click', () => isOpen() ? close() : open());
+  backdrop.addEventListener('click', close);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isOpen()) close();
+  });
+
+  // If the user resizes back to desktop, reset the mobile drawer state
+  window.matchMedia('(max-width: 900px)').addEventListener('change', (e) => {
+    if (!e.matches) close();
   });
 }
 
@@ -249,39 +322,69 @@ function setupEventListeners() {
     }
   });
 
-  // Text selection → show color picker
-  contentEl.addEventListener('mouseup', (e) => {
-    const selection = window.getSelection();
-    const text = selection.toString().trim();
-
+  // Text selection → show color picker.
+  //
+  // We listen to `selectionchange` (debounced) so this works on touch devices
+  // where `mouseup` is unreliable (iOS doesn't fire it during selection-handle
+  // dragging). `mouseup` and `touchend` are kept as snappy fallbacks for desktop
+  // and Android. The popup is positioned with viewport clamping so it never
+  // ends up off-screen on narrow phones.
+  function maybeShowSelectionPopup() {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) {
+      popup.classList.remove('visible');
+      return;
+    }
+    const text = sel.toString().trim();
     if (text.length < 3) {
       popup.classList.remove('visible');
       return;
     }
+    const range = sel.getRangeAt(0);
+    if (!contentEl.contains(range.commonAncestorContainer)) {
+      popup.classList.remove('visible');
+      return;
+    }
 
-    // Get selection range info
-    const range = selection.getRangeAt(0);
-    const rect = range.getBoundingClientRect();
-    const article = contentEl.closest('.reader-article');
-    const articleRect = article.getBoundingClientRect();
-    pendingHighlight = {
-      text,
-      range: range.cloneRange(),
-    };
-
-    // position: fixed → use viewport coordinates directly
-    popup.style.left = Math.max(10, rect.left + rect.width / 2 - 40) + 'px';
-    popup.style.top = (rect.top - 44) + 'px';
+    pendingHighlight = { text, range: range.cloneRange() };
+    positionPopupNear(range);
     popup.classList.add('visible');
+  }
+
+  function positionPopupNear(range) {
+    const rect = range.getBoundingClientRect();
+    // Make popup visible-but-offscreen briefly so we can measure it
+    if (popup.offsetWidth === 0) {
+      popup.style.visibility = 'hidden';
+      popup.classList.add('visible');
+    }
+    const w = popup.offsetWidth || 152;
+    const h = popup.offsetHeight || 52;
+    popup.style.visibility = '';
+    const margin = 8;
+    let left = rect.left + rect.width / 2 - w / 2;
+    left = Math.max(margin, Math.min(window.innerWidth - w - margin, left));
+    let top = rect.top - h - margin;
+    if (top < margin) top = rect.bottom + margin; // Flip below if no room above
+    popup.style.left = left + 'px';
+    popup.style.top = top + 'px';
+  }
+
+  let selDebounce;
+  document.addEventListener('selectionchange', () => {
+    clearTimeout(selDebounce);
+    selDebounce = setTimeout(maybeShowSelectionPopup, 200);
+  });
+  contentEl.addEventListener('mouseup', maybeShowSelectionPopup);
+  contentEl.addEventListener('touchend', () => {
+    // Touch needs a frame for the selection state to settle
+    setTimeout(maybeShowSelectionPopup, 80);
   });
 
-  // Click elsewhere hides popup (but not during active selection/annotation)
+  // Click outside hides the comment input (popup hides itself via selection state).
   document.addEventListener('mousedown', (e) => {
-    if (e.target.closest('.highlight-popup') || e.target.closest('.annotation-input')) return;
-    if (e.target.closest('.scan-highlight--pending')) return; // Don't clear during pending highlight
-    popup.classList.remove('visible');
-    // Only hide annotation input if clicking outside it AND outside pending highlight
-    if (!pendingHighlight) {
+    if (e.target.closest('.highlight-popup') || e.target.closest('.annotation-input') || e.target.closest('.scan-highlight--pending')) return;
+    if (annotInput.classList.contains('visible') && !pendingHighlight) {
       annotInput.classList.remove('visible');
     }
   });
@@ -313,13 +416,23 @@ function setupEventListeners() {
 
       window.getSelection().removeAllRanges();
 
-      // Show comment input near the highlighted text
+      // Show comment input near the highlighted text — clamped to viewport
       const target = pendingHighlight.previewSpan || { getBoundingClientRect: () => pendingHighlight.range.getBoundingClientRect() };
       const rect = target.getBoundingClientRect();
 
-      annotInput.style.left = Math.max(20, rect.left) + 'px';
-      annotInput.style.top = (rect.bottom + 8) + 'px';
       annotInput.classList.add('visible');
+      // Measure after making visible. CSS may override `left` on mobile (it
+      // pins the input to viewport edges) — that's intentional.
+      const w = annotInput.offsetWidth || 320;
+      const h = annotInput.offsetHeight || 200;
+      const margin = 12;
+      let left = Math.max(margin, Math.min(window.innerWidth - w - margin, rect.left));
+      let top = rect.bottom + margin;
+      if (top + h > window.innerHeight - margin) {
+        top = Math.max(margin, rect.top - h - margin);
+      }
+      annotInput.style.left = left + 'px';
+      annotInput.style.top = top + 'px';
       document.getElementById('annotation-comment').value = '';
       document.getElementById('annotation-comment').focus();
     });
@@ -393,6 +506,10 @@ function setupEventListeners() {
 
   // Save to Vault
   document.getElementById('reader-vault').addEventListener('click', saveToVault);
+
+  // Mobile-only navigation: TOC sheet + Annotations drawer.
+  setupTocSheet();
+  setupSidebarDrawer();
 
   // Concept Explorer
   setupConceptExplorer();

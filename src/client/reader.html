@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#050508">
+  <meta name="color-scheme" content="dark">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>BASAIRA_ Reader</title>
   <link rel="stylesheet" href="css/scan.css">
   <link rel="stylesheet" href="css/reader.css">
@@ -15,14 +19,21 @@
   <div class="reader">
     <!-- ═══ READER HEADER ═══ -->
     <header class="reader-header">
-      <a href="/" class="reader-header__back" title="Back to BASAIRA_">← BASAIRA_</a>
+      <div class="reader-header__left">
+        <a href="/" class="reader-header__back" title="Back to BASAIRA_">← BASAIRA_</a>
+        <button class="reader-header__nav-btn" id="reader-toc-btn" aria-label="Table of contents" title="Sections">§</button>
+        <button class="reader-header__nav-btn" id="reader-notes-btn" aria-label="Annotations" title="Notes & annotations">✎</button>
+      </div>
       <div class="reader-header__actions">
         <button class="btn btn--icon" id="reader-save" title="Read Later">☆</button>
-        <button class="btn btn--icon" id="reader-vault" title="Save to Obsidian Vault">⤓ Vault</button>
+        <button class="btn btn--icon" id="reader-vault" title="Save to Obsidian Vault">⤓<span class="btn__label"> Vault</span></button>
         <button class="btn btn--icon" id="reader-pdf" title="Open PDF">PDF</button>
         <button class="btn btn--icon" id="reader-arxiv" title="Open on arXiv">arXiv</button>
       </div>
     </header>
+
+    <!-- Drawer backdrop (mobile sidebar overlay) -->
+    <div class="drawer-backdrop" id="reader-drawer-backdrop"></div>
 
     <!-- ═══ READER BODY ═══ -->
     <div class="reader-layout">
@@ -90,8 +101,18 @@
       </aside>
     </div>
 
-    <!-- Sidebar toggle -->
+    <!-- Sidebar toggle (desktop only — mobile uses #reader-notes-btn) -->
     <button class="sidebar-toggle" id="sidebar-toggle" title="Toggle sidebar">◀</button>
+
+    <!-- TOC sheet (mobile only) -->
+    <div class="sheet-backdrop" id="toc-sheet" role="dialog" aria-modal="true" aria-labelledby="toc-sheet-title">
+      <div class="sheet">
+        <div class="sheet__handle" aria-hidden="true"></div>
+        <div class="sheet__title" id="toc-sheet-title">Sections</div>
+        <ul class="toc-list" id="toc-list"></ul>
+        <button class="sheet__cancel" id="toc-cancel">Close</button>
+      </div>
+    </div>
 
     <!-- Notification -->
     <div class="notification" id="notification"></div>

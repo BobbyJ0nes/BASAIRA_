@@ -29,6 +29,12 @@
   backdrop-filter: blur(20px);
 }
 
+.reader-header__left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .reader-header__back {
   font-family: var(--font-mono);
   font-size: 12px;
@@ -40,6 +46,32 @@
 }
 
 .reader-header__back:hover { color: var(--text-primary); }
+
+/* Mobile-only nav buttons (TOC, Notes) */
+.reader-header__nav-btn {
+  display: none;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  padding: 0;
+}
+.reader-header__nav-btn:hover, .reader-header__nav-btn:focus-visible {
+  color: var(--text-primary);
+  border-color: var(--border-active);
+  background: var(--bg-hover);
+  outline: none;
+}
+.reader-header__nav-btn.active {
+  color: var(--cognition);
+  border-color: var(--cognition);
+  background: rgba(0, 255, 136, 0.06);
+}
 
 .reader-header__actions {
   display: flex;
@@ -524,13 +556,15 @@
 .highlight-popup {
   position: fixed;
   display: none;
-  gap: 6px;
-  padding: 6px 8px;
+  gap: 8px;
+  padding: 8px 10px;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 6px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
   z-index: 1000;
+  /* Stay onscreen even if JS positioning is off; max-width clamps width */
+  max-width: calc(100vw - 16px);
 }
 
 .highlight-popup.visible {
@@ -538,17 +572,20 @@
 }
 
 .highlight-popup__color {
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: 2px solid transparent;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: border-color 0.15s, transform 0.15s;
+  /* Larger touch target */
+  -webkit-tap-highlight-color: transparent;
 }
 
-.highlight-popup__color:hover {
+.highlight-popup__color:hover, .highlight-popup__color:focus-visible {
   border-color: #fff;
-  transform: scale(1.2);
+  transform: scale(1.15);
+  outline: none;
 }
 
 /* ─── ANNOTATION COMMENT INPUT ─── */
@@ -560,10 +597,12 @@
   padding: 12px;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 6px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   z-index: 1000;
   width: 320px;
+  /* Never overflow narrow viewports */
+  max-width: calc(100vw - 24px);
 }
 
 .annotation-input.visible {
@@ -1014,8 +1053,57 @@
 
 .reader-sidebar__connected .connected-paper:hover { background: var(--bg-hover); }
 
+/* ─── TOC SHEET (mobile only — list of sections) ─── */
+.toc-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 16px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.toc-list__item {
+  padding: 12px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+  background: var(--bg-tertiary);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 6px;
+}
+.toc-list__item:hover, .toc-list__item:focus-visible {
+  background: var(--bg-hover);
+  border-color: var(--border-active);
+  color: var(--text-primary);
+  outline: none;
+}
+.toc-list__item--sub {
+  padding-left: 28px;
+  font-size: 13px;
+  background: transparent;
+}
+.toc-list__num {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  padding-top: 1px;
+  min-width: 16px;
+}
+.toc-list__title {
+  flex: 1;
+  min-width: 0;
+}
+
 /* ─── RESPONSIVE ─── */
-@media (max-width: 1100px) {
+
+/* Tablet / narrow desktop: stack nicely */
+@media (max-width: 1100px) and (min-width: 901px) {
   .reader-layout {
     grid-template-columns: 1fr;
   }
@@ -1027,5 +1115,102 @@
   }
   .reader-article {
     padding: 32px 24px;
+  }
+}
+
+/* Mobile: hide left rail, sidebar becomes a right drawer */
+@media (max-width: 900px) {
+  .reader-layout {
+    grid-template-columns: 1fr;
+  }
+
+  /* Article gets the full row, comfortable padding */
+  .reader-article {
+    padding: 24px 18px 80px;
+    max-width: 100%;
+  }
+  .reader-article__title { font-size: 22px; }
+  .reader-article__content { font-size: 15px; line-height: 1.75; }
+  .reader-section__title { font-size: 16px; }
+  .reader-section__subtitle { font-size: 14px; }
+  .reader-section__body { font-size: 15px; line-height: 1.75; }
+
+  /* Hide the left rail entirely — it overlaps the article on touch */
+  .reader-nav { display: none; }
+
+  /* Show the in-header nav buttons */
+  .reader-header__nav-btn { display: inline-flex; align-items: center; justify-content: center; }
+
+  /* Tighten the header so all actions still fit. Header may wrap to a
+     second row on very narrow phones — that's acceptable. */
+  .reader-header {
+    padding: 0 10px;
+    flex-wrap: wrap;
+    height: auto;
+    min-height: var(--header-height);
+    gap: 6px 0;
+  }
+  .reader-header__left { gap: 6px; }
+  .reader-header__back { font-size: 11px; letter-spacing: 1px; }
+  .reader-header__actions { gap: 4px; }
+  .reader-header__actions .btn { padding: 6px 8px; font-size: 10px; }
+  /* "⤓ Vault" → just the icon on mobile */
+  #reader-vault .btn__label { display: none; }
+  #reader-vault { font-size: 14px; padding: 6px 10px; }
+
+  /* Sidebar becomes a slide-in drawer from the right */
+  .reader-sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 360px;
+    max-width: 90vw;
+    height: 100vh;
+    z-index: 110;
+    transform: translateX(100%);
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border-left: 1px solid var(--border);
+    border-top: none;
+    background: var(--bg-secondary);
+  }
+  .reader-sidebar.drawer-open {
+    transform: translateX(0);
+    box-shadow: -6px 0 28px rgba(0, 0, 0, 0.55);
+  }
+
+  /* Desktop sidebar collapse mechanism is irrelevant on mobile */
+  .sidebar-toggle { display: none; }
+  .sidebar-collapsed .reader-sidebar { /* override desktop hide rules */
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  /* Larger color targets, wider popup */
+  .highlight-popup { padding: 10px 12px; gap: 10px; }
+  .highlight-popup__color { width: 36px; height: 36px; }
+
+  /* Annotation input gets near-full width */
+  .annotation-input {
+    width: calc(100vw - 24px);
+    max-width: 360px;
+    left: 12px !important;
+  }
+  .annotation-input textarea {
+    min-height: 64px;
+    font-size: 13px;
+  }
+  .annotation-input__actions .btn { padding: 8px 16px; }
+
+  /* Inline comment input full-width on mobile */
+  .inline-comment-input { margin-left: -4px; margin-right: -4px; }
+
+  /* Suppress iOS native long-press menu so it doesn't fight our popup,
+     while keeping text selection enabled. */
+  .reader-article {
+    -webkit-touch-callout: none;
+    -webkit-user-select: text;
+    user-select: text;
   }
 }
